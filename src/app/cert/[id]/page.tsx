@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
@@ -49,7 +49,7 @@ export default function CertificatePage() {
 
   const certificateId = params.id as string;
 
-  const fetchCertificate = async () => {
+  const fetchCertificate = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("certificates")
@@ -66,11 +66,11 @@ export default function CertificatePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [certificateId]);
 
   useEffect(() => {
     fetchCertificate();
-  }, [certificateId]);
+  }, [certificateId, fetchCertificate]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -247,115 +247,123 @@ export default function CertificatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-black">
       <Toaster position="top-right" />
 
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Digital Certificate
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Blockchain-verified academic credential
-            </p>
-          </div>
+      {/* Header */}
+      <header className="border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center">
+                <Award className="w-5 h-5 text-white dark:text-black" />
+              </div>
+              <div>
+                <h1 className="text-xl font-medium text-black dark:text-white">
+                  NullSafety Certificate
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Blockchain-verified credential
+                </p>
+              </div>
+            </div>
 
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            <WalletMultiButton />
+            <div className="flex items-center space-x-3">
+              <ThemeToggle />
+              <WalletMultiButton />
+            </div>
           </div>
         </div>
+      </header>
 
+      <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Certificate Display */}
           <div className="lg:col-span-2">
             <div
               ref={certificateRef}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-12 border-8 border-blue-100 dark:border-blue-800"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23f0f8ff' fill-opacity='0.1'%3e%3ccircle cx='30' cy='30' r='4'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`,
-              }}
+              className="bg-white dark:bg-black border-2 border-gray-200 dark:border-gray-800 rounded-lg p-16"
             >
               {/* Certificate Header */}
-              <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Award className="w-12 h-12 text-white" />
+              <div className="text-center mb-12">
+                <div className="w-16 h-16 bg-black dark:bg-white rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Award className="w-8 h-8 text-white dark:text-black" />
                 </div>
-                <h1 className="text-4xl font-serif font-bold text-gray-800 dark:text-gray-200 mb-2">
+                <h1 className="text-3xl font-bold text-black dark:text-white mb-4 tracking-wide">
                   CERTIFICATE OF COMPLETION
                 </h1>
-                <div className="w-32 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto"></div>
+                <div className="w-24 h-px bg-black dark:bg-white mx-auto"></div>
               </div>
 
               {/* Certificate Body */}
-              <div className="text-center space-y-6">
-                <p className="text-lg text-gray-600 dark:text-gray-300">
+              <div className="text-center space-y-8">
+                <p className="text-gray-600 dark:text-gray-400">
                   This is to certify that
                 </p>
 
-                <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-gray-200 border-b-2 border-gray-300 dark:border-gray-600 pb-2 mx-12">
+                <h2 className="text-4xl font-bold text-black dark:text-white border-b border-gray-300 dark:border-gray-700 pb-3 mx-8">
                   {certificate.student_name}
                 </h2>
 
-                <p className="text-lg text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-400">
                   Roll No:{" "}
-                  <span className="font-semibold">{certificate.roll_no}</span>
+                  <span className="font-medium text-black dark:text-white">
+                    {certificate.roll_no}
+                  </span>
                 </p>
 
-                <p className="text-lg text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-400">
                   has successfully completed the course
                 </p>
 
-                <h3 className="text-2xl font-serif font-semibold text-blue-700 dark:text-blue-400">
+                <h3 className="text-2xl font-semibold text-black dark:text-white">
                   {certificate.course_name}
                 </h3>
 
-                <p className="text-lg text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-400">
                   with grade{" "}
-                  <span className="font-bold text-green-600 dark:text-green-400">
+                  <span className="font-medium text-black dark:text-white">
                     {certificate.grade}
                   </span>
                 </p>
 
-                <div className="flex justify-between items-end mt-12 pt-8">
+                <div className="flex justify-between items-end mt-16 pt-8">
                   <div className="text-left">
-                    <div className="w-40 border-b border-gray-400 dark:border-gray-600 mb-2"></div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="w-32 border-b border-gray-300 dark:border-gray-700 mb-2"></div>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide">
                       Issued Date
                     </p>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                    <p className="font-medium text-black dark:text-white">
                       {new Date(certificate.issued_date).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-2">
-                      <CheckCircle className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                    <div className="w-12 h-12 bg-black dark:bg-white rounded-full flex items-center justify-center mb-2">
+                      <CheckCircle className="w-6 h-6 text-white dark:text-black" />
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Blockchain Verified
+                    <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide">
+                      Verified
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <div className="w-40 border-b border-gray-400 dark:border-gray-600 mb-2"></div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="w-32 border-b border-gray-300 dark:border-gray-700 mb-2"></div>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide">
                       Issued By
                     </p>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                    <p className="font-medium text-black dark:text-white">
                       {certificate.institution_name}
                     </p>
                   </div>
                 </div>
 
                 {/* Certificate Hash */}
-                <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Certificate Hash (Blockchain Proof)
+                <div className="mt-12 p-6 border border-gray-200 dark:border-gray-800 rounded">
+                  <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">
+                    Blockchain Hash
                   </p>
-                  <p className="font-mono text-sm text-gray-700 dark:text-gray-300 break-all">
+                  <p className="font-mono text-xs text-gray-600 dark:text-gray-400 break-all">
                     {certificate.certificate_hash}
                   </p>
                 </div>
@@ -364,49 +372,50 @@ export default function CertificatePage() {
           </div>
 
           {/* Actions Panel */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Certificate Status */}
-            <Card className="dark:bg-gray-800">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
+            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-black dark:text-white text-sm font-medium">
                   <CheckCircle
-                    className={`w-5 h-5 ${certificate.is_revoked ? "text-red-500" : "text-green-500"}`}
+                    className={`w-4 h-4 ${certificate.is_revoked ? "text-gray-400" : "text-black dark:text-white"}`}
                   />
-                  <span>Certificate Status</span>
+                  <span>Status</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p
-                  className={`font-semibold ${certificate.is_revoked ? "text-red-600" : "text-green-600"}`}
-                >
-                  {certificate.is_revoked ? "Revoked" : "Valid & Verified"}
+                <p className="font-medium text-black dark:text-white">
+                  {certificate.is_revoked ? "Revoked" : "Valid"}
                 </p>
-                <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
-                  Last verified on blockchain
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Blockchain verified
                 </p>
               </CardContent>
             </Card>
 
             {/* Actions */}
-            <Card className="dark:bg-gray-800">
-              <CardHeader>
-                <CardTitle>Actions</CardTitle>
+            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-black dark:text-white text-sm font-medium">
+                  Actions
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button
                   onClick={handleShare}
                   variant="outline"
-                  className="w-full"
+                  className="w-full border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
                 >
                   <Share2 className="w-4 h-4 mr-2" />
-                  Share Certificate
+                  Share
                 </Button>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <Button
                     onClick={handleDownloadPNG}
                     variant="outline"
                     size="sm"
+                    className="border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     PNG
@@ -415,6 +424,7 @@ export default function CertificatePage() {
                     onClick={handleDownloadPDF}
                     variant="outline"
                     size="sm"
+                    className="border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     PDF
@@ -442,9 +452,9 @@ export default function CertificatePage() {
                   ) : (
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600">
+                        <Button className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
                           <Award className="w-4 h-4 mr-2" />
-                          Mint as NFT
+                          Mint NFT
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -476,12 +486,12 @@ export default function CertificatePage() {
                             <Button
                               onClick={handleMintNFT}
                               disabled={minting}
-                              className="w-full"
+                              className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
                             >
                               {minting ? "Minting..." : "Mint NFT"}
                             </Button>
                           ) : (
-                            <p className="text-sm text-red-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               Student wallet address required to mint NFT.
                             </p>
                           )}
@@ -491,7 +501,7 @@ export default function CertificatePage() {
                   )
                 ) : (
                   <div className="text-center space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500 dark:text-gray-500">
                       Connect wallet to mint NFT
                     </p>
                   </div>
@@ -501,36 +511,40 @@ export default function CertificatePage() {
 
             {/* Success Dialog */}
             {mintSuccess && (
-              <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+              <Card className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-black">
                 <CardHeader>
-                  <CardTitle className="text-green-800 dark:text-green-300">
-                    NFT Minted Successfully!
+                  <CardTitle className="text-black dark:text-white text-sm font-medium">
+                    NFT Minted Successfully
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <strong>Transaction:</strong>{" "}
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-500 mb-1">
+                        Transaction
+                      </p>
                       <a
                         href={`https://solscan.io/tx/${mintSuccess.signature}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 break-all"
+                        className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 break-all font-mono text-xs"
                       >
                         {mintSuccess.signature}
                       </a>
-                    </p>
-                    <p>
-                      <strong>NFT Address:</strong>{" "}
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-500 mb-1">
+                        NFT Address
+                      </p>
                       <a
                         href={`https://solscan.io/token/${mintSuccess.nftAddress}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 break-all"
+                        className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 break-all font-mono text-xs"
                       >
                         {mintSuccess.nftAddress}
                       </a>
-                    </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

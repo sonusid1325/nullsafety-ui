@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +51,7 @@ export default function DashboardPage() {
     student_wallet: "",
   });
 
-  const fetchInstitutionData = async () => {
+  const fetchInstitutionData = useCallback(async () => {
     if (!publicKey) return;
 
     try {
@@ -70,67 +70,54 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error fetching institution:", error);
     }
-  };
+  }, [publicKey]);
+
+  const fetchCertificates = useCallback(async () => {
+    if (!publicKey) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("certificates")
+        .select("*")
+        .eq("issued_by", publicKey.toString())
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setCertificates(data || []);
+    } catch (error) {
+      console.error("Error fetching certificates:", error);
+      toast.error("Failed to fetch certificates");
+    } finally {
+      setLoading(false);
+    }
+  }, [publicKey]);
 
   useEffect(() => {
     if (connected && publicKey) {
       fetchInstitutionData();
       fetchCertificates();
-    }
-  }, [connected, publicKey]);
-
-  const fetchCertificates = async () => {
-    if (!publicKey) return;
-
-    try {
-      // First get institution
-      const { data: institutionData } = await supabase
-        .from("institutions")
-        .select("name")
-        .eq("authority_wallet", publicKey.toString())
-        .single();
-
-      if (institutionData) {
-        const { data, error } = await supabase
-          .from("certificates")
-          .select("*")
-          .eq("institution_name", institutionData.name)
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setCertificates(data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching certificates:", error);
-    } finally {
+    } else {
       setLoading(false);
     }
-  };
+  }, [connected, publicKey, fetchInstitutionData, fetchCertificates]);
 
   const handleCreateCertificate = async () => {
-    if (!institution || !publicKey) {
-      toast.error("Institution not found");
-      return;
-    }
+    if (!publicKey || !institution) return;
 
     try {
-      // Generate certificate hash (in production, use proper hashing)
-      const certificateHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-
       const certificateData = {
         ...formData,
+        certificate_id: `CERT-${Date.now()}`,
         institution_name: institution.name,
         issued_by: publicKey.toString(),
-        issued_date: new Date().toISOString().split("T")[0],
-        certificate_hash: certificateHash,
+        issued_date: new Date().toISOString(),
+        certificate_hash: `hash-${Date.now()}`, // In production, generate proper hash
         is_revoked: false,
       };
 
       const { error } = await supabase
         .from("certificates")
-        .insert([certificateData])
-        .select()
-        .single();
+        .insert([certificateData]);
 
       if (error) throw error;
 
@@ -143,8 +130,6 @@ export default function DashboardPage() {
         grade: "",
         student_wallet: "",
       });
-
-      // Refresh certificates list
       fetchCertificates();
     } catch (error) {
       console.error("Error creating certificate:", error);
@@ -152,36 +137,20 @@ export default function DashboardPage() {
     }
   };
 
-  const handleRevokeCertificate = async (certificateId: string) => {
-    try {
-      const { error } = await supabase
-        .from("certificates")
-        .update({ is_revoked: true })
-        .eq("id", certificateId);
-
-      if (error) throw error;
-
-      toast.success("Certificate revoked successfully");
-      fetchCertificates();
-    } catch (error) {
-      console.error("Error revoking certificate:", error);
-      toast.error("Failed to revoke certificate");
-    }
-  };
-
   if (!connected) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Card className="w-96 dark:bg-gray-800">
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <Card className="w-96 border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
           <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <Award className="mx-auto h-12 w-12 text-blue-500" />
-              <h2 className="text-xl font-semibold dark:text-white">
-                Institution Dashboard
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black dark:bg-white rounded-full flex items-center justify-center mx-auto mb-6">
+                <Award className="w-8 h-8 text-white dark:text-black" />
+              </div>
+              <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
+                NullSafety Dashboard
               </h2>
-              <p className="text-muted-foreground dark:text-gray-400">
-                Connect your wallet to access the certificate management
-                dashboard
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Connect your wallet to access the certificate dashboard
               </p>
               <WalletMultiButton />
             </div>
@@ -193,319 +162,348 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!institution) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Card className="w-96 dark:bg-gray-800">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <XCircle className="mx-auto h-12 w-12 text-red-500" />
-              <h2 className="text-xl font-semibold dark:text-white">
-                Institution Not Found
-              </h2>
-              <p className="text-muted-foreground dark:text-gray-400">
-                Your wallet is not associated with any registered institution.
-                Please contact support to register your institution.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black dark:border-white"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-black">
       <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      <header className="border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {institution.name} Dashboard
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300">
-                Manage certificates and institution settings
-              </p>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center">
+                <Award className="w-5 h-5 text-white dark:text-black" />
+              </div>
+              <div>
+                <h1 className="text-xl font-medium text-black dark:text-white">
+                  NullSafety Dashboard
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {institution?.name || "Certificate Management"}
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <div
-                className={`px-3 py-1 rounded-full text-sm ${
-                  institution.is_verified
-                    ? "bg-green-100 text-green-800"
-                    : "bg-yellow-100 text-yellow-800"
-                }`}
+              <Link
+                href="/"
+                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
               >
-                {institution.is_verified ? "Verified" : "Pending Verification"}
-              </div>
+                Home
+              </Link>
               <ThemeToggle />
               <WalletMultiButton />
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="dark:bg-gray-800">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Certificates
               </CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{certificates.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Issued certificates
-              </p>
+              <div className="text-2xl font-bold text-black dark:text-white">
+                {certificates.length}
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-gray-800">
+          <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Active Certificates
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Active
               </CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CheckCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-black dark:text-white">
                 {certificates.filter((cert) => !cert.is_revoked).length}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Valid certificates
-              </p>
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-gray-800">
+          <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                NFT Certificates
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                NFT Minted
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <Award className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-black dark:text-white">
                 {certificates.filter((cert) => cert.nft_mint).length}
               </div>
-              <p className="text-xs text-muted-foreground">Minted as NFTs</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                This Month
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-black dark:text-white">
+                {
+                  certificates.filter(
+                    (cert) =>
+                      new Date(cert.created_at).getMonth() ===
+                      new Date().getMonth(),
+                  ).length
+                }
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold dark:text-white">
-            Certificates
-          </h2>
+        {/* Actions and Certificates */}
+        <div className="space-y-6">
+          {/* Create Certificate */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-black dark:text-white">
+                Certificates
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Manage and issue blockchain certificates
+              </p>
+            </div>
 
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Issue Certificate
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>Issue New Certificate</DialogTitle>
-                <DialogDescription>
-                  Create a new certificate for a student. This will be stored on
-                  the blockchain.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-gray-200">
-                    Student Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    value={formData.student_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, student_name: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-gray-200">
-                    Roll Number
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    value={formData.roll_no}
-                    onChange={(e) =>
-                      setFormData({ ...formData, roll_no: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-gray-200">
-                    Course Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    value={formData.course_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, course_name: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-gray-200">
-                    Grade
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    value={formData.grade}
-                    onChange={(e) =>
-                      setFormData({ ...formData, grade: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-gray-200">
-                    Student Wallet Address (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="For NFT minting"
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                    value={formData.student_wallet}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        student_wallet: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateModalOpen(false)}
-                >
-                  Cancel
+            <Dialog
+              open={isCreateModalOpen}
+              onOpenChange={setIsCreateModalOpen}
+            >
+              <DialogTrigger asChild>
+                <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Certificate
                 </Button>
-                <Button onClick={handleCreateCertificate}>
-                  Issue Certificate
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
+                <DialogHeader>
+                  <DialogTitle className="text-black dark:text-white">
+                    Create New Certificate
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-600 dark:text-gray-400">
+                    Issue a new blockchain certificate for a student.
+                  </DialogDescription>
+                </DialogHeader>
 
-        {/* Certificates List */}
-        <div className="grid gap-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-black dark:text-white">
+                      Student Name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                      value={formData.student_name}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          student_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-black dark:text-white">
+                      Roll Number
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                      value={formData.roll_no}
+                      onChange={(e) =>
+                        setFormData({ ...formData, roll_no: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-black dark:text-white">
+                      Course Name
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                      value={formData.course_name}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          course_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-black dark:text-white">
+                      Grade
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                      value={formData.grade}
+                      onChange={(e) =>
+                        setFormData({ ...formData, grade: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-black dark:text-white">
+                      Student Wallet Address (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white text-sm font-mono"
+                      value={formData.student_wallet}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          student_wallet: e.target.value,
+                        })
+                      }
+                      placeholder="Solana wallet address for NFT minting"
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="border-gray-300 dark:border-gray-700"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateCertificate}
+                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                    disabled={!formData.student_name || !formData.course_name}
+                  >
+                    Create Certificate
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Certificates List */}
           {certificates.length === 0 ? (
-            <Card className="dark:bg-gray-800">
-              <CardContent className="pt-6">
-                <div className="text-center text-muted-foreground dark:text-gray-400">
-                  <FileText className="mx-auto h-12 w-12 mb-4" />
-                  <p>No certificates issued yet.</p>
-                  <p className="text-sm">
-                    Create your first certificate to get started.
+            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+              <CardContent className="py-16">
+                <div className="text-center">
+                  <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-black dark:text-white mb-2">
+                    No certificates yet
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Get started by creating your first certificate
                   </p>
+                  <Button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Certificate
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ) : (
-            certificates.map((certificate) => (
-              <Card key={certificate.id} className="dark:bg-gray-800">
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold dark:text-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {certificates.map((certificate) => (
+                <Card
+                  key={certificate.id}
+                  className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-sm font-medium text-black dark:text-white">
                           {certificate.student_name}
-                        </h3>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          (Roll: {certificate.roll_no})
-                        </span>
+                        </CardTitle>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {certificate.roll_no}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {certificate.nft_mint && (
+                          <Award className="h-4 w-4 text-black dark:text-white" />
+                        )}
                         {certificate.is_revoked ? (
-                          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">
-                            Revoked
-                          </span>
+                          <XCircle className="h-4 w-4 text-gray-400" />
                         ) : (
-                          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-                            Active
-                          </span>
+                          <CheckCircle className="h-4 w-4 text-black dark:text-white" />
                         )}
                       </div>
-
-                      <p className="text-gray-600 dark:text-gray-300">
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-black dark:text-white">
                         {certificate.course_name}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Grade: {certificate.grade} • Issued:{" "}
-                        {certificate.issued_date}
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Grade: {certificate.grade}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                        {new Date(certificate.created_at).toLocaleDateString()}
                       </p>
 
-                      {certificate.nft_mint && (
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Award className="w-4 h-4 text-purple-500" />
-                          <span className="text-purple-600">Minted as NFT</span>
+                      <div className="flex items-center space-x-2">
+                        <Link href={`/cert/${certificate.id}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-3 border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
+                          </Button>
+                        </Link>
+
+                        {certificate.nft_mint && (
                           <a
                             href={`https://solscan.io/token/${certificate.nft_mint}?cluster=devnet`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800"
                           >
-                            <ExternalLink className="w-3 h-3" />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-3 border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
                           </a>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Link href={`/cert/${certificate.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                      </Link>
-
-                      {!certificate.is_revoked && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleRevokeCertificate(certificate.id)
-                          }
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Revoke
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       </div>

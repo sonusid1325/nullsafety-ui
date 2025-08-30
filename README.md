@@ -1,43 +1,72 @@
-# CertifyChain - Blockchain Certificate Verification System
+# NullSafety - Certificate Verification System
 
-A comprehensive certificate issuance and verification platform built on Solana blockchain with Next.js, featuring NFT minting capabilities and institutional management.
+A blockchain-based certificate issuance and verification platform built on Solana, featuring a minimal Vercel-inspired design system.
 
-## 🌟 Features
+## 🎯 Overview
 
-- **Blockchain Security**: Tamper-proof certificates stored on Solana blockchain
-- **Instant Verification**: Cryptographic proof-based certificate verification
-- **NFT Certificates**: Transform certificates into tradeable NFTs using Metaplex
-- **Multi-Institution Support**: Role-based access for multiple educational institutions
-- **Global Access**: Share certificates with permanent URLs and QR codes
-- **Download Options**: Export certificates as PNG or PDF
-- **Real-time Dashboard**: Institution management and certificate analytics
+Team NullSafety has developed a comprehensive certificate verification system that leverages blockchain technology to create tamper-proof digital credentials. The platform features a clean, minimal black and white design inspired by Vercel's aesthetic, ensuring both functionality and visual appeal.
 
-## 🚀 Tech Stack
+## ✨ Key Features
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **UI Components**: shadcn/ui, Radix UI
-- **Blockchain**: Solana, Anchor Framework
-- **NFT Protocol**: Metaplex Foundation
-- **Wallet Integration**: Solana Wallet Adapter
-- **Database**: Supabase (PostgreSQL)
-- **File Storage**: Local storage with API endpoints
-- **Notifications**: React Hot Toast
+### 🔐 Blockchain Security
+- **Immutable Records**: Certificates stored on Solana blockchain
+- **Tamper-Proof**: Cryptographic verification ensures authenticity
+- **Decentralized**: No single point of failure
 
-## 📋 Prerequisites
+### ⚡ Instant Verification
+- **Real-time Checking**: Verify certificates in seconds
+- **Global Access**: Share and verify certificates worldwide
+- **Permanent URLs**: Each certificate has a unique, permanent link
 
-Before you begin, ensure you have:
+### 🎨 NFT Integration
+- **Mint as NFTs**: Transform certificates into tradeable digital assets
+- **Wallet Integration**: Seamless connection with Solana wallets
+- **Metaplex Protocol**: Built on industry-standard NFT framework
 
-- Node.js 18+ installed
-- A Solana wallet (Phantom, Solflare, etc.)
-- Supabase account for database
-- Basic understanding of Solana and Web3
+### 🎨 Modern Design
+- **Minimal Aesthetic**: Clean black and white design system
+- **Dark/Light Themes**: Automatic theme switching with persistence
+- **Responsive Design**: Works perfectly on all devices
+- **Accessibility First**: High contrast and clear typography
 
-## 🛠️ Installation
+## 🛠 Tech Stack
+
+### Frontend
+- **Next.js 15**: React framework with App Router
+- **TypeScript**: Type-safe development
+- **Tailwind CSS 4**: Utility-first styling
+- **shadcn/ui**: High-quality UI components
+
+### Blockchain
+- **Solana**: High-performance blockchain
+- **@solana/web3.js**: Solana JavaScript SDK
+- **@solana/wallet-adapter**: Wallet integration
+- **Metaplex SDK**: NFT minting and metadata
+
+### Backend & Database
+- **Supabase**: PostgreSQL database and authentication
+- **Edge Functions**: Serverless backend logic
+
+### Additional Libraries
+- **next-themes**: Theme management
+- **react-hot-toast**: Notifications
+- **html2canvas**: Certificate image generation
+- **jsPDF**: PDF export functionality
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
+- Solana devnet SOL for testing
+
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
-   cd nullsafety-ui
+   git clone <repository-url>
+   cd SIH/nullsafety-ui
    ```
 
 2. **Install dependencies**
@@ -45,175 +74,236 @@ Before you begin, ensure you have:
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Environment Setup**
+   Create a `.env.local` file:
    ```bash
-   cp .env.example .env.local
-   ```
-   
-   Fill in the required environment variables:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-   NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
-   NEXT_PUBLIC_PROGRAM_ID=BssezJKJhhZfQo6EWUHVrfonpdJba54ptgRyG4v5wzb3
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-4. **Set up Supabase database**
-   - Create a new Supabase project
-   - Run the SQL schema from `supabase-schema.sql` in the SQL editor
-   - Configure Row Level Security policies as needed
-
-5. **Deploy the Anchor program** (if not already deployed)
+4. **Database Setup**
+   Run the SQL schema in your Supabase dashboard:
    ```bash
-   cd ../contract
-   anchor build
-   anchor deploy
+   # File: supabase-schema.sql contains the database structure
    ```
 
-6. **Start the development server**
+5. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-7. **Open your browser**
-   Navigate to `http://localhost:3000`
+6. **Visit the Application**
+   Open [http://localhost:3000](http://localhost:3000)
 
-## 🏗️ Project Structure
+## 📁 Project Structure
 
 ```
 src/
-├── app/                    # Next.js 13+ App Router
-│   ├── api/               # API routes
-│   │   └── upload-certificate-image/  # Image upload endpoint
-│   ├── cert/[id]/         # Certificate display page
-│   ├── dashboard/         # Institution dashboard
-│   ├── layout.tsx         # Root layout with wallet provider
-│   └── page.tsx          # Landing page
-├── components/
-│   ├── ui/               # shadcn/ui components
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   └── dialog.tsx
-│   └── WalletProvider.tsx # Solana wallet configuration
-├── lib/
-│   ├── mintCertificateNFT.ts  # NFT minting logic
-│   ├── supabase.ts           # Database configuration
-│   └── utils.ts              # Utility functions
+├── app/                          # Next.js App Router
+│   ├── cert/[id]/               # Certificate viewing page
+│   ├── dashboard/               # Institution dashboard
+│   ├── theme-demo/              # Design system demo
+│   ├── layout.tsx               # Root layout
+│   └── page.tsx                 # Homepage
+├── components/                   # Reusable components
+│   ├── ui/                      # shadcn/ui components
+│   ├── ThemeProvider.tsx        # Theme context
+│   ├── ThemeToggle.tsx          # Theme switching
+│   └── WalletProvider.tsx       # Solana wallet setup
+├── lib/                         # Utility functions
+│   ├── supabase.ts              # Database client
+│   ├── mintCertificateNFT.ts    # NFT minting logic
+│   └── utils.ts                 # Helper functions
+└── globals.css                  # Global styles
 ```
 
-## 🎯 Usage Guide
+## 🎨 Design System
 
-### For Institutions
+### Color Palette
+- **Primary**: Black (#000000) / White (#FFFFFF)
+- **Background**: White (#FFFFFF) / Black (#000000)
+- **Text**: Black (#000000) / White (#FFFFFF)
+- **Borders**: Gray-200 (#E5E7EB) / Gray-800 (#1F2937)
+- **Muted**: Gray-600 (#4B5563) / Gray-400 (#9CA3AF)
 
-1. **Connect Wallet**: Use the "Connect Wallet" button with your institution's authorized wallet
-2. **Access Dashboard**: Navigate to `/dashboard` to manage certificates
-3. **Issue Certificates**: Click "Issue Certificate" and fill in student details
-4. **View Analytics**: Monitor certificate statistics and verification counts
+### Typography
+- **Font Family**: Geist Sans
+- **Weights**: 400 (Regular), 500 (Medium), 600 (Semibold), 700 (Bold)
+- **Line Height**: 1.5 (24px/16px)
 
-### For Students/Public
+### Components
+All components follow the minimal design principles:
+- High contrast for accessibility
+- Clean borders and spacing
+- Consistent interaction states
+- Seamless theme transitions
 
-1. **View Certificate**: Access certificates via `/cert/[id]` URL
-2. **Verify Authenticity**: Certificate automatically shows blockchain verification status
-3. **Share Certificate**: Use the share button to copy the certificate URL
-4. **Download**: Export certificate as PNG or PDF for offline use
+## 🔧 Key Components
 
-### NFT Minting Process
+### Certificate Viewer (`/cert/[id]`)
+- **View Certificates**: Display blockchain-verified credentials
+- **Download Options**: PNG and PDF export
+- **NFT Minting**: Transform certificates into NFTs
+- **Share Functionality**: Social sharing and link copying
+- **Verification Status**: Real-time blockchain verification
 
-1. **Prerequisite**: Student wallet address must be provided in certificate data
-2. **Authorization**: Only the issuing institution can mint NFTs
-3. **Minting**: Click "Mint as NFT" button in certificate view
-4. **Transfer**: NFT is automatically transferred to student's wallet
-5. **Verification**: View NFT on Solscan using the provided links
+### Dashboard (`/dashboard`)
+- **Institution Management**: Multi-institution support
+- **Certificate Creation**: Issue new certificates
+- **Statistics Overview**: Certificate analytics
+- **Wallet Integration**: Connect institutional wallets
 
-## 🔧 API Endpoints
+### Theme Demo (`/theme-demo`)
+- **Design Showcase**: Complete design system demonstration
+- **Theme Controls**: Live theme switching
+- **Component Library**: All UI components in action
 
-### Certificate Management
-- `GET /cert/[id]` - View certificate page
-- `POST /api/upload-certificate-image` - Upload certificate images for NFT metadata
+## 🗄️ Database Schema
 
-### Database Operations (via Supabase)
-- **Institutions**: CRUD operations for institution management
-- **Certificates**: Certificate issuance, revocation, and updates
-- **Verifications**: Track certificate verification events
+### Tables
 
-## 🎨 Customization
+#### `certificates`
+- Basic certificate information
+- Student details and grades
+- Blockchain hash and verification status
+- NFT mint address (when minted)
 
-### Styling
-- Modify `src/app/globals.css` for global styles
-- Update Tailwind configuration in `tailwind.config.js`
-- Customize UI components in `src/components/ui/`
+#### `institutions`
+- Institution registration data
+- Authority wallet addresses
+- Verification status
 
-### Certificate Design
-- Edit certificate template in `src/app/cert/[id]/page.tsx`
-- Modify the certificate rendering section to match your institution's branding
-- Update background patterns and styling as needed
+## 🔗 Blockchain Integration
 
-### Blockchain Configuration
-- Update program ID in environment variables
-- Modify RPC endpoints for different networks (devnet/mainnet)
-- Adjust wallet adapter configuration in `WalletProvider.tsx`
+### Solana Network
+- **Network**: Devnet (testing) / Mainnet (production)
+- **Wallet Support**: Phantom, Solflare, and other Solana wallets
+- **Transaction Fees**: Low-cost Solana transactions
+
+### NFT Minting
+- **Metaplex Standard**: Industry-standard NFT protocol
+- **Metadata Storage**: IPFS for decentralized storage
+- **Ownership Transfer**: Direct to student wallets
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. Connect your GitHub repository
+2. Set environment variables
+3. Deploy automatically on push
+
+### Manual Deployment
+```bash
+npm run build
+npm start
+```
+
+## 🧪 Testing
+
+### Local Testing
+```bash
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Check for TypeScript errors
+npx tsc --noEmit
+
+# Lint code
+npm run lint
+```
+
+### Wallet Testing
+1. Install Phantom wallet
+2. Switch to Devnet
+3. Get devnet SOL from faucet
+4. Test certificate minting
 
 ## 🔒 Security Considerations
 
-1. **Wallet Security**: Never expose private keys in client-side code
-2. **Database Security**: Use Supabase RLS policies to protect sensitive data
-3. **Image Uploads**: Validate file types and implement size limits
-4. **Environment Variables**: Keep sensitive keys in `.env.local` (not committed)
+- **Wallet Security**: Never store private keys
+- **Environment Variables**: Secure API keys
+- **Database Access**: Row-level security enabled
+- **Input Validation**: All user inputs validated
+- **HTTPS Only**: Secure connections enforced
 
-## 🚨 Troubleshooting
+## 🌟 Features in Detail
 
-### Common Issues
+### Certificate Verification
+1. **Blockchain Hash**: Each certificate has a unique blockchain hash
+2. **Immutable Storage**: Data cannot be altered once stored
+3. **Global Verification**: Verify from anywhere in the world
+4. **Instant Results**: Real-time verification status
 
-1. **Wallet Connection Issues**
-   - Ensure wallet extension is installed and unlocked
-   - Check if you're on the correct network (devnet/mainnet)
+### NFT Functionality
+1. **One-Click Minting**: Transform certificates to NFTs
+2. **Student Ownership**: NFTs sent directly to student wallets
+3. **Tradeable Assets**: Can be bought, sold, or transferred
+4. **Permanent Records**: Stored on-chain permanently
 
-2. **Database Connection Errors**
-   - Verify Supabase URL and API key
-   - Check if database schema is properly set up
-
-3. **NFT Minting Failures**
-   - Ensure sufficient SOL for transaction fees
-   - Verify Metaplex configuration and Bundlr setup
-   - Check student wallet address format
-
-4. **Certificate Not Found**
-   - Verify certificate ID in URL
-   - Check database for certificate existence
-
-### Debug Tips
-
-- Enable browser developer tools for detailed error logs
-- Check Supabase dashboard for database query logs
-- Use Solana Explorer to verify blockchain transactions
+### Institution Management
+1. **Multi-Institution**: Support for multiple educational institutions
+2. **Role-Based Access**: Different permissions for different roles
+3. **Verification System**: Institution verification process
+4. **Analytics Dashboard**: Track certificate issuance and usage
 
 ## 🤝 Contributing
 
+### Development Workflow
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+### Code Style
+- Use TypeScript for type safety
+- Follow existing naming conventions
+- Write descriptive commit messages
+- Add comments for complex logic
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is built for educational purposes as part of the Smart India Hackathon.
 
-## 🙏 Acknowledgments
+## 👥 Team NullSafety
 
-- [Solana Foundation](https://solana.org/) for blockchain infrastructure
-- [Metaplex](https://www.metaplex.com/) for NFT protocols
-- [Anchor](https://www.anchor-lang.com/) for Solana program development
-- [Supabase](https://supabase.com/) for database services
-- [shadcn/ui](https://ui.shadcn.com/) for UI components
+Built with ❤️ by Team NullSafety for the Smart India Hackathon 2024.
 
-## 📞 Support
-
-For support and questions:
-- Create an issue in the GitHub repository
-- Check existing documentation and troubleshooting guides
-- Review Solana and Metaplex documentation for blockchain-specific issues
+### Contact
+- **Team**: NullSafety
+- **Project**: Certificate Verification System
+- **Technology**: Solana Blockchain + Next.js
 
 ---
 
-**Built with ❤️ for educational verification on blockchain**
+## 🎯 Quick Start Commands
+
+```bash
+# Install and run
+npm install && npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Type checking
+npx tsc --noEmit
+
+# Linting
+npm run lint
+```
+
+## 🌐 Live Demo
+
+Experience the NullSafety Certificate Verification System:
+- **Homepage**: Clean, minimal landing page
+- **Dashboard**: Institution certificate management
+- **Certificate Viewer**: Blockchain-verified credentials
+- **Theme Demo**: Complete design system showcase
+
+Transform the way certificates are issued, verified, and trusted with blockchain technology and beautiful, accessible design.

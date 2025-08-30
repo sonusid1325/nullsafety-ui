@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Certificate Verification System",
+  title: "NullSafety - Certificate Verification System",
   description:
-    "Blockchain-based certificate issuance and verification platform",
+    "NullSafety's blockchain-based certificate issuance and verification platform built on Solana",
 };
 
 export default function RootLayout({

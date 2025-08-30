@@ -1,4 +1,3 @@
-import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 import { WalletAdapter } from "@solana/wallet-adapter-base";
 
 export interface CertificateNFTMetadata {
