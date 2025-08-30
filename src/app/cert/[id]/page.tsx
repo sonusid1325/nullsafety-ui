@@ -27,7 +27,6 @@ import {
   mintCertificateNFT,
   generateCertificateImageFromDOM,
   uploadCertificateImage,
-  CertificateNFTMetadata,
 } from "@/lib/mintCertificateNFT";
 import toast, { Toaster } from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -42,6 +41,8 @@ export default function CertificatePage() {
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
   const [minting, setMinting] = useState(false);
+  const [mintingStep, setMintingStep] = useState<string>("");
+  const [mintProgress, setMintProgress] = useState(0);
   const [mintSuccess, setMintSuccess] = useState<{
     signature: string;
     nftAddress: string;
@@ -166,56 +167,115 @@ export default function CertificatePage() {
 
     setMinting(true);
 
-    try {
-      // Generate certificate image
-      const imageBlob = await generateCertificateImageFromDOM(
-        certificateRef.current!,
-      );
+    // Use setTimeout to allow UI to update with loading state
+    setTimeout(async () => {
+      try {
+        console.log("🚀 Starting minting process...");
+        setMintingStep("Initializing minting process...");
+        setMintProgress(10);
 
-      // Upload image (you'll need to implement the upload endpoint)
-      const imageUrl = await uploadCertificateImage(imageBlob);
+        // Generate certificate image with small delay for UI responsiveness
+        const certificateElement = certificateRef.current;
+        if (!certificateElement) {
+          throw new Error("Certificate element not found");
+        }
 
-      const nftMetadata: CertificateNFTMetadata = {
-        studentName: certificate.student_name,
-        rollNo: certificate.roll_no,
-        courseName: certificate.course_name,
-        universityName: certificate.institution_name,
-        issuedDate: certificate.issued_date,
-        certificateHash: certificate.certificate_hash,
-        certificateUrl: window.location.href,
-        imageUrl,
-      };
+        console.log("📸 Generating certificate image...");
+        setMintingStep("Generating certificate image...");
+        setMintProgress(20);
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
 
-      const result = await mintCertificateNFT(
-        wallet.adapter,
-        certificate.student_wallet,
-        nftMetadata,
-      );
+        const imageBlob =
+          await generateCertificateImageFromDOM(certificateElement);
 
-      if (result.success) {
-        // Update certificate with NFT mint address
-        await supabase
-          .from("certificates")
-          .update({ nft_mint: result.nftAddress })
-          .eq("id", certificate.id);
+        console.log("☁️ Uploading certificate image...");
+        setMintingStep("Uploading certificate image...");
+        setMintProgress(30);
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
 
-        setMintSuccess({
-          signature: result.signature!,
-          nftAddress: result.nftAddress!,
+        const imageUrl = await uploadCertificateImage(imageBlob);
+
+        const nftMetadata = {
+          studentName: certificate.student_name,
+          rollNo: certificate.roll_no,
+          courseName: certificate.course_name,
+          universityName: certificate.institution_name || "",
+          issuedDate: certificate.issued_date,
+          certificateHash: certificate.certificate_hash,
+          certificateUrl: window.location.href,
+          imageUrl,
+        };
+
+        console.log("🪙 Starting NFT minting...");
+        setMintingStep("Creating NFT on blockchain...");
+        setMintProgress(40);
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
+
+        // Add timeout to prevent hanging
+        if (!certificate.student_wallet) {
+          throw new Error("Student wallet address is required");
+        }
+
+        const mintPromise = mintCertificateNFT(
+          wallet.adapter,
+          certificate.student_wallet,
+          nftMetadata,
+        );
+
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(
+              new Error("Minting timeout after 120 seconds. Please try again."),
+            );
+          }, 120000); // 2 minute timeout
         });
 
-        toast.success("Certificate NFT minted successfully!");
-      } else {
-        throw new Error(result.error || "Failed to mint NFT");
+        setMintingStep("Waiting for blockchain confirmation...");
+        setMintProgress(70);
+
+        const result = (await Promise.race([mintPromise, timeoutPromise])) as {
+          success: boolean;
+          signature?: string;
+          nftAddress?: string;
+          error?: string;
+        };
+
+        if (result.success) {
+          console.log("💾 Updating database...");
+          setMintingStep("Updating database...");
+          setMintProgress(90);
+          await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
+
+          // Update certificate with NFT mint address
+          await supabase
+            .from("certificates")
+            .update({ nft_mint: result.nftAddress })
+            .eq("id", certificate.id);
+
+          setMintingStep("Completed successfully!");
+          setMintProgress(100);
+
+          setMintSuccess({
+            signature: result.signature!,
+            nftAddress: result.nftAddress!,
+          });
+
+          toast.success("Certificate NFT minted successfully!");
+          console.log("🎉 Minting completed successfully!");
+        } else {
+          throw new Error(result.error || "Failed to mint NFT");
+        }
+      } catch (error) {
+        console.error("💥 Error minting NFT:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to mint NFT",
+        );
+      } finally {
+        setMinting(false);
+        setMintingStep("");
+        setMintProgress(0);
       }
-    } catch (error) {
-      console.error("Error minting NFT:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to mint NFT",
-      );
-    } finally {
-      setMinting(false);
-    }
+    }, 50); // Small delay to let loading state show
   };
 
   if (loading) {
@@ -247,8 +307,34 @@ export default function CertificatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-black relative">
       <Toaster position="top-right" />
+
+      {/* Loading Overlay */}
+      {minting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div className="text-center space-y-4">
+              <Award className="w-12 h-12 mx-auto text-blue-600 animate-spin" />
+              <h3 className="text-lg font-semibold text-black dark:text-white">
+                Minting NFT Certificate
+              </h3>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${mintProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {mintingStep}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                Please do not close this page or navigate away during minting
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800">
@@ -483,13 +569,43 @@ export default function CertificatePage() {
                           </div>
 
                           {certificate.student_wallet ? (
-                            <Button
-                              onClick={handleMintNFT}
-                              disabled={minting}
-                              className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-                            >
-                              {minting ? "Minting..." : "Mint NFT"}
-                            </Button>
+                            <div className="space-y-3">
+                              <Button
+                                onClick={handleMintNFT}
+                                disabled={minting}
+                                className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                              >
+                                {minting ? (
+                                  <>
+                                    <Award className="w-4 h-4 mr-2 animate-spin" />
+                                    Minting NFT...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Award className="w-4 h-4 mr-2" />
+                                    Mint NFT
+                                  </>
+                                )}
+                              </Button>
+
+                              {minting && (
+                                <div className="space-y-2">
+                                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div
+                                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                      style={{ width: `${mintProgress}%` }}
+                                    ></div>
+                                  </div>
+                                  <p className="text-xs text-center text-gray-600 dark:text-gray-400">
+                                    {mintingStep}
+                                  </p>
+                                  <p className="text-xs text-center text-gray-500 dark:text-gray-500">
+                                    Please keep this page open and wait for
+                                    completion
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               Student wallet address required to mint NFT.

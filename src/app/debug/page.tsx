@@ -201,6 +201,12 @@ export default function DebugPage() {
               >
                 Home
               </Link>
+              <Link
+                href="/collectables"
+                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
+              >
+                Collectables
+              </Link>
 
               <ThemeToggle />
               <WalletMultiButton />

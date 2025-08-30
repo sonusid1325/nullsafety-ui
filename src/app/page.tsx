@@ -43,6 +43,12 @@ export default function HomePage() {
                 Features
               </Link>
               <Link
+                href="/collectables"
+                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
+              >
+                Collectables
+              </Link>
+              <Link
                 href="/dashboard"
                 className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
               >
@@ -59,6 +65,12 @@ export default function HomePage() {
                 className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
               >
                 Debug
+              </Link>
+              <Link
+                href="/mint-debug"
+                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
+              >
+                Mint Debug
               </Link>
             </nav>
 
@@ -296,6 +308,14 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link
+                    href="/collectables"
+                    className="hover:text-black dark:hover:text-white"
+                  >
+                    Collectables
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="#features"
                     className="hover:text-black dark:hover:text-white"
                   >
@@ -324,6 +344,14 @@ export default function HomePage() {
                     className="hover:text-black dark:hover:text-white"
                   >
                     Debug
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/mint-debug"
+                    className="hover:text-black dark:hover:text-white"
+                  >
+                    Mint Debug
                   </Link>
                 </li>
               </ul>
