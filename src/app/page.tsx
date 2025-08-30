@@ -43,12 +43,6 @@ export default function HomePage() {
                 Features
               </Link>
               <Link
-                href="/register-university"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Register University
-              </Link>
-              <Link
                 href="/dashboard"
                 className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
               >

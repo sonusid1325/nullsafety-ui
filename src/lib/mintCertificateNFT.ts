@@ -4,17 +4,19 @@ import {
   PublicKey,
   Keypair,
   LAMPORTS_PER_SOL,
+  Transaction,
+  SystemProgram,
 } from "@solana/web3.js";
 import {
-  Metaplex,
-  walletAdapterIdentity,
-  bundlrStorage,
-  toMetaplexFile,
-} from "@metaplex-foundation/js";
-import {
-  createCreateMetadataAccountV3Instruction,
-  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
-} from "@metaplex-foundation/mpl-token-metadata";
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+  createMintToInstruction,
+  createInitializeMintInstruction,
+  MINT_SIZE,
+} from "@solana/spl-token";
+// Removed Metaplex UMI dependencies to avoid browser compatibility issues
+// Using direct web3.js approach for better compatibility
 
 export interface CertificateNFTMetadata {
   studentName: string;
@@ -34,26 +36,72 @@ export interface MintResult {
   error?: string;
 }
 
-// Initialize connection and Metaplex
+// Initialize connection
 const getConnection = () => {
   const rpcUrl =
     process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
   return new Connection(rpcUrl, "confirmed");
 };
 
-const getMetaplex = (wallet: WalletAdapter) => {
-  const connection = getConnection();
+// Create metadata JSON for NFT
+const createAndUploadMetadata = async (
+  certificateData: CertificateNFTMetadata,
+) => {
+  const metadata = {
+    name: `${certificateData.universityName} - ${certificateData.courseName}`,
+    symbol: "CERT",
+    description: `Certificate of completion for ${certificateData.studentName} (${certificateData.rollNo}) from ${certificateData.universityName}. Course: ${certificateData.courseName}. Issued: ${certificateData.issuedDate}`,
+    image: certificateData.imageUrl || "",
+    external_url: certificateData.certificateUrl,
+    attributes: [
+      {
+        trait_type: "Student Name",
+        value: certificateData.studentName,
+      },
+      {
+        trait_type: "Roll Number",
+        value: certificateData.rollNo,
+      },
+      {
+        trait_type: "Course",
+        value: certificateData.courseName,
+      },
+      {
+        trait_type: "University",
+        value: certificateData.universityName,
+      },
+      {
+        trait_type: "Issue Date",
+        value: certificateData.issuedDate,
+      },
+      {
+        trait_type: "Certificate Hash",
+        value: certificateData.certificateHash,
+      },
+      {
+        trait_type: "Type",
+        value: "Academic Certificate",
+      },
+      {
+        trait_type: "Verification",
+        value: "Blockchain Verified",
+      },
+    ],
+    properties: {
+      category: "image",
+      files: [
+        {
+          uri: certificateData.imageUrl || "",
+          type: "image/png",
+        },
+      ],
+    },
+  };
 
-  if (!wallet.publicKey) {
-    throw new Error("Wallet not connected");
-  }
-
-  // Use walletAdapterIdentity instead of keypairIdentity for wallet adapters
-  const metaplex = Metaplex.make(connection)
-    .use(walletAdapterIdentity(wallet))
-    .use(bundlrStorage());
-
-  return metaplex;
+  // For devnet, create a data URI instead of uploading to Irys
+  const metadataJson = JSON.stringify(metadata);
+  const base64Data = Buffer.from(metadataJson).toString("base64");
+  return `data:application/json;base64,${base64Data}`;
 };
 
 export async function mintCertificateNFT(
@@ -66,142 +114,154 @@ export async function mintCertificateNFT(
       throw new Error("Wallet not connected");
     }
 
-    const connection = getConnection();
+    // Check if wallet supports signing transactions
+    const walletWithSigning = wallet as WalletAdapter & {
+      signTransaction?: (transaction: Transaction) => Promise<Transaction>;
+    };
+
+    console.log("Starting NFT minting process...");
 
     // Validate student wallet address
     let studentPublicKey: PublicKey;
     try {
       studentPublicKey = new PublicKey(studentWalletAddress);
-    } catch (error) {
+    } catch {
       throw new Error("Invalid student wallet address");
     }
 
+    const connection = getConnection();
+
     // Check if issuer has enough SOL
     const balance = await connection.getBalance(wallet.publicKey);
-    if (balance < 0.01 * LAMPORTS_PER_SOL) {
+    if (balance < 0.1 * LAMPORTS_PER_SOL) {
       throw new Error(
-        "Insufficient SOL balance. Need at least 0.01 SOL for minting.",
+        "Insufficient SOL balance. Need at least 0.1 SOL for minting.",
       );
     }
 
-    const metaplex = getMetaplex(wallet);
+    console.log("Creating metadata...");
+    const metadataUri = await createAndUploadMetadata(certificateData);
+    console.log("Metadata created:", metadataUri);
 
-    // Create metadata for the NFT
-    const nftMetadata = {
-      name: `${certificateData.universityName} - ${certificateData.courseName}`,
-      symbol: "CERT",
-      description: `Certificate of completion for ${certificateData.studentName} (${certificateData.rollNo}) from ${certificateData.universityName}. Course: ${certificateData.courseName}. Issued: ${certificateData.issuedDate}`,
-      image: certificateData.imageUrl || "",
-      external_url: certificateData.certificateUrl,
-      attributes: [
-        {
-          trait_type: "Student Name",
-          value: certificateData.studentName,
-        },
-        {
-          trait_type: "Roll Number",
-          value: certificateData.rollNo,
-        },
-        {
-          trait_type: "Course",
-          value: certificateData.courseName,
-        },
-        {
-          trait_type: "University",
-          value: certificateData.universityName,
-        },
-        {
-          trait_type: "Issue Date",
-          value: certificateData.issuedDate,
-        },
-        {
-          trait_type: "Certificate Hash",
-          value: certificateData.certificateHash,
-        },
-        {
-          trait_type: "Type",
-          value: "Academic Certificate",
-        },
-        {
-          trait_type: "Verification",
-          value: "Blockchain Verified",
-        },
-      ],
-      properties: {
-        category: "image",
-        files: [
-          {
-            uri: certificateData.imageUrl || "",
-            type: "image/png",
-          },
-        ],
-      },
-    };
+    // Use simple web3.js approach for more compatibility
+    const mintKeypair = Keypair.generate();
+    console.log("NFT mint address:", mintKeypair.publicKey.toString());
 
-    console.log("Creating NFT metadata...");
+    // Get minimum lamports for mint account
+    const mintLamports =
+      await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
 
-    // Upload metadata to Arweave/IPFS using Metaplex
-    const { uri: metadataUri } = await metaplex
-      .nfts()
-      .uploadMetadata(nftMetadata);
+    // Get associated token account for the student
+    const tokenAccount = await getAssociatedTokenAddress(
+      mintKeypair.publicKey,
+      studentPublicKey,
+    );
 
-    console.log("Metadata uploaded to:", metadataUri);
+    // Create transaction
+    const transaction = new Transaction();
 
-    // Create the NFT
-    console.log("Minting NFT...");
-    const { nft, response } = await metaplex.nfts().create({
-      uri: metadataUri,
-      name: nftMetadata.name,
-      symbol: nftMetadata.symbol,
-      sellerFeeBasisPoints: 0, // No royalties
-      creators: [
-        {
-          address: wallet.publicKey,
-          verified: true,
-          share: 100,
-        },
-      ],
-      collection: null,
-      uses: null,
-    });
+    // Create mint account
+    transaction.add(
+      SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: mintKeypair.publicKey,
+        space: MINT_SIZE,
+        lamports: mintLamports,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+    );
 
-    console.log("NFT created with address:", nft.address.toString());
-    console.log("Transaction signature:", response.signature);
+    // Initialize mint
+    transaction.add(
+      createInitializeMintInstruction(
+        mintKeypair.publicKey,
+        0, // 0 decimals for NFT
+        wallet.publicKey, // mint authority
+        wallet.publicKey, // freeze authority
+      ),
+    );
 
-    // Transfer NFT to student wallet if different from issuer
-    if (!studentPublicKey.equals(wallet.publicKey)) {
-      console.log("Transferring NFT to student wallet...");
+    // Create associated token account for student
+    transaction.add(
+      createAssociatedTokenAccountInstruction(
+        wallet.publicKey, // payer
+        tokenAccount, // associated token account
+        studentPublicKey, // owner
+        mintKeypair.publicKey, // mint
+      ),
+    );
 
-      const transferResponse = await metaplex.nfts().transfer({
-        nftOrSft: nft,
-        toOwner: studentPublicKey,
-      });
+    // Mint token to student account
+    transaction.add(
+      createMintToInstruction(
+        mintKeypair.publicKey, // mint
+        tokenAccount, // destination
+        wallet.publicKey, // authority
+        1, // amount (1 for NFT)
+      ),
+    );
 
-      console.log("Transfer signature:", transferResponse.response.signature);
+    // Get recent blockhash and set fee payer
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = wallet.publicKey;
+
+    // Sign transaction with mint keypair
+    transaction.partialSign(mintKeypair);
+
+    if (!walletWithSigning.signTransaction) {
+      throw new Error("Wallet doesn't support transaction signing");
     }
+
+    // Sign transaction with wallet
+    console.log("Signing transaction...");
+    const signedTransaction =
+      await walletWithSigning.signTransaction(transaction);
+
+    console.log("Sending transaction...");
+    // Send transaction
+    const signature = await connection.sendRawTransaction(
+      signedTransaction.serialize(),
+      {
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+      },
+    );
+
+    console.log("Confirming transaction...");
+    // Confirm transaction
+    await connection.confirmTransaction(signature, "confirmed");
+
+    console.log("✅ NFT minted successfully!");
+    console.log("Transaction signature:", signature);
+    console.log("NFT mint address:", mintKeypair.publicKey.toString());
+    console.log("Student token account:", tokenAccount.toString());
 
     return {
       success: true,
-      signature: response.signature,
-      nftAddress: nft.address.toString(),
+      signature: signature,
+      nftAddress: mintKeypair.publicKey.toString(),
     };
-  } catch (error: any) {
-    console.error("Error minting NFT:", error);
+  } catch (error: unknown) {
+    console.error("❌ Error minting NFT:", error);
 
     // Provide more specific error messages
     let errorMessage = "Unknown error occurred";
+    const errorMsg = error instanceof Error ? error.message : String(error);
 
-    if (error.message?.includes("insufficient funds")) {
+    if (errorMsg.includes("insufficient funds")) {
       errorMessage =
-        "Insufficient SOL for transaction fees. Need at least 0.01 SOL.";
-    } else if (error.message?.includes("Invalid student wallet")) {
+        "Insufficient SOL for transaction fees. Need at least 0.1 SOL.";
+    } else if (errorMsg.includes("Invalid student wallet")) {
       errorMessage = "Invalid student wallet address format";
-    } else if (error.message?.includes("Wallet not connected")) {
+    } else if (errorMsg.includes("Wallet not connected")) {
       errorMessage = "Please connect your wallet first";
-    } else if (error.message?.includes("User rejected")) {
+    } else if (errorMsg.includes("User rejected")) {
       errorMessage = "Transaction was rejected by user";
-    } else if (error.message) {
-      errorMessage = error.message;
+    } else if (errorMsg.includes("doesn't support signing")) {
+      errorMessage = "Wallet doesn't support transaction signing";
+    } else if (errorMsg) {
+      errorMessage = errorMsg;
     }
 
     return {
@@ -211,14 +271,10 @@ export async function mintCertificateNFT(
   }
 }
 
-export async function uploadCertificateImage(
-  imageBlob: Blob,
-  certificateId: string,
-): Promise<string> {
+export async function uploadCertificateImage(imageBlob: Blob): Promise<string> {
   try {
     // For devnet testing, we'll use a simple base64 data URL
     // In production, you should upload to IPFS, Arweave, or AWS S3
-
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -228,27 +284,6 @@ export async function uploadCertificateImage(
       reader.onerror = reject;
       reader.readAsDataURL(imageBlob);
     });
-
-    // Alternative: Upload to IPFS using a service like Pinata
-    /*
-    const formData = new FormData();
-    formData.append("file", imageBlob, `certificate-${certificateId}.png`);
-
-    const response = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to upload to IPFS");
-    }
-
-    const result = await response.json();
-    return `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`;
-    */
   } catch (error) {
     console.error("Error uploading certificate image:", error);
     throw new Error("Failed to upload certificate image");
@@ -301,21 +336,15 @@ export async function checkNFTOwnership(
     const nftPublicKey = new PublicKey(nftAddress);
     const ownerPublicKey = new PublicKey(ownerAddress);
 
-    const accountInfo = await connection.getParsedAccountInfo(nftPublicKey);
+    // Get the associated token account
+    const tokenAccount = await getAssociatedTokenAddress(
+      nftPublicKey,
+      ownerPublicKey,
+    );
 
-    if (
-      !accountInfo.value?.data ||
-      typeof accountInfo.value.data === "string"
-    ) {
-      return false;
-    }
-
-    const parsedData = accountInfo.value.data as any;
-    if (parsedData.program === "spl-token" && parsedData.parsed?.info?.owner) {
-      return parsedData.parsed.info.owner === ownerPublicKey.toString();
-    }
-
-    return false;
+    // Check if the account exists and has balance
+    const accountInfo = await connection.getTokenAccountBalance(tokenAccount);
+    return accountInfo.value.uiAmount === 1;
   } catch (error) {
     console.error("Error checking NFT ownership:", error);
     return false;
@@ -326,15 +355,22 @@ export async function checkNFTOwnership(
 export async function getNFTMetadata(nftAddress: string) {
   try {
     const connection = getConnection();
+    const mintPublicKey = new PublicKey(nftAddress);
 
-    // Create a Metaplex instance for reading only (no wallet needed for reading)
-    const metaplex = Metaplex.make(connection);
+    // Get mint info
+    const mintInfo = await connection.getParsedAccountInfo(mintPublicKey);
 
-    const nft = await metaplex.nfts().findByMint({
-      mintAddress: new PublicKey(nftAddress),
-    });
+    if (!mintInfo.value) {
+      throw new Error("Mint account not found");
+    }
 
-    return nft;
+    return {
+      address: mintPublicKey.toString(),
+      exists: true,
+      supply:
+        (mintInfo.value.data as { parsed?: { info?: { supply?: string } } })
+          ?.parsed?.info?.supply || "0",
+    } as const;
   } catch (error) {
     console.error("Error fetching NFT metadata:", error);
     return null;

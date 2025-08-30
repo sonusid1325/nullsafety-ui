@@ -173,7 +173,7 @@ export default function CertificatePage() {
       );
 
       // Upload image (you'll need to implement the upload endpoint)
-      const imageUrl = await uploadCertificateImage(imageBlob, certificate.id);
+      const imageUrl = await uploadCertificateImage(imageBlob);
 
       const nftMetadata: CertificateNFTMetadata = {
         studentName: certificate.student_name,
