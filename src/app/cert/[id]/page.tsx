@@ -32,6 +32,7 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function CertificatePage() {
   const params = useParams();
@@ -47,10 +48,6 @@ export default function CertificatePage() {
   } | null>(null);
 
   const certificateId = params.id as string;
-
-  useEffect(() => {
-    fetchCertificate();
-  }, [certificateId]);
 
   const fetchCertificate = async () => {
     try {
@@ -71,6 +68,10 @@ export default function CertificatePage() {
     }
   };
 
+  useEffect(() => {
+    fetchCertificate();
+  }, [certificateId]);
+
   const handleShare = async () => {
     const url = window.location.href;
 
@@ -78,10 +79,10 @@ export default function CertificatePage() {
       try {
         await navigator.share({
           title: `Certificate - ${certificate?.student_name}`,
-          text: `View ${certificate?.student_name}'s certificate for ${certificate?.course_name}`,
+          text: `View ${certificate?.student_name}&apos;s certificate for ${certificate?.course_name}`,
           url,
         });
-      } catch (error) {
+      } catch {
         // Fallback to clipboard
         await copyToClipboard(url);
       }
@@ -94,7 +95,7 @@ export default function CertificatePage() {
     try {
       await navigator.clipboard.writeText(text);
       toast.success("Certificate link copied to clipboard!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to copy link");
     }
   };
@@ -116,7 +117,7 @@ export default function CertificatePage() {
       link.click();
 
       toast.success("Certificate downloaded as PNG!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to download certificate");
     }
   };
@@ -145,7 +146,7 @@ export default function CertificatePage() {
       );
 
       toast.success("Certificate downloaded as PDF!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to download certificate");
     }
   };
@@ -246,22 +247,23 @@ export default function CertificatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Toaster position="top-right" />
 
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Digital Certificate
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-300">
               Blockchain-verified academic credential
             </p>
           </div>
 
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <WalletMultiButton />
           </div>
         </div>
@@ -271,7 +273,7 @@ export default function CertificatePage() {
           <div className="lg:col-span-2">
             <div
               ref={certificateRef}
-              className="bg-white rounded-lg shadow-lg p-12 border-8 border-blue-100"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-12 border-8 border-blue-100 dark:border-blue-800"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23f0f8ff' fill-opacity='0.1'%3e%3ccircle cx='30' cy='30' r='4'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`,
               }}
@@ -281,7 +283,7 @@ export default function CertificatePage() {
                 <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Award className="w-12 h-12 text-white" />
                 </div>
-                <h1 className="text-4xl font-serif font-bold text-gray-800 mb-2">
+                <h1 className="text-4xl font-serif font-bold text-gray-800 dark:text-gray-200 mb-2">
                   CERTIFICATE OF COMPLETION
                 </h1>
                 <div className="w-32 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto"></div>
@@ -289,63 +291,71 @@ export default function CertificatePage() {
 
               {/* Certificate Body */}
               <div className="text-center space-y-6">
-                <p className="text-lg text-gray-600">This is to certify that</p>
+                <p className="text-lg text-gray-600 dark:text-gray-300">
+                  This is to certify that
+                </p>
 
-                <h2 className="text-3xl font-serif font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mx-12">
+                <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-gray-200 border-b-2 border-gray-300 dark:border-gray-600 pb-2 mx-12">
                   {certificate.student_name}
                 </h2>
 
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-600 dark:text-gray-300">
                   Roll No:{" "}
                   <span className="font-semibold">{certificate.roll_no}</span>
                 </p>
 
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-600 dark:text-gray-300">
                   has successfully completed the course
                 </p>
 
-                <h3 className="text-2xl font-serif font-semibold text-blue-700">
+                <h3 className="text-2xl font-serif font-semibold text-blue-700 dark:text-blue-400">
                   {certificate.course_name}
                 </h3>
 
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-600 dark:text-gray-300">
                   with grade{" "}
-                  <span className="font-bold text-green-600">
+                  <span className="font-bold text-green-600 dark:text-green-400">
                     {certificate.grade}
                   </span>
                 </p>
 
                 <div className="flex justify-between items-end mt-12 pt-8">
                   <div className="text-left">
-                    <div className="w-40 border-b border-gray-400 mb-2"></div>
-                    <p className="text-sm text-gray-600">Issued Date</p>
-                    <p className="font-semibold">
+                    <div className="w-40 border-b border-gray-400 dark:border-gray-600 mb-2"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Issued Date
+                    </p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
                       {new Date(certificate.issued_date).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                      <CheckCircle className="w-10 h-10 text-blue-600" />
+                    <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-2">
+                      <CheckCircle className="w-10 h-10 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <p className="text-xs text-gray-500">Blockchain Verified</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Blockchain Verified
+                    </p>
                   </div>
 
                   <div className="text-right">
-                    <div className="w-40 border-b border-gray-400 mb-2"></div>
-                    <p className="text-sm text-gray-600">Issued By</p>
-                    <p className="font-semibold">
+                    <div className="w-40 border-b border-gray-400 dark:border-gray-600 mb-2"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Issued By
+                    </p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
                       {certificate.institution_name}
                     </p>
                   </div>
                 </div>
 
                 {/* Certificate Hash */}
-                <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-                  <p className="text-xs text-gray-500">
+                <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Certificate Hash (Blockchain Proof)
                   </p>
-                  <p className="font-mono text-sm text-gray-700 break-all">
+                  <p className="font-mono text-sm text-gray-700 dark:text-gray-300 break-all">
                     {certificate.certificate_hash}
                   </p>
                 </div>
@@ -356,7 +366,7 @@ export default function CertificatePage() {
           {/* Actions Panel */}
           <div className="space-y-6">
             {/* Certificate Status */}
-            <Card>
+            <Card className="dark:bg-gray-800">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <CheckCircle
@@ -371,14 +381,14 @@ export default function CertificatePage() {
                 >
                   {certificate.is_revoked ? "Revoked" : "Valid & Verified"}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
                   Last verified on blockchain
                 </p>
               </CardContent>
             </Card>
 
             {/* Actions */}
-            <Card>
+            <Card className="dark:bg-gray-800">
               <CardHeader>
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
@@ -442,7 +452,7 @@ export default function CertificatePage() {
                           <DialogTitle>Mint Certificate NFT</DialogTitle>
                           <DialogDescription>
                             This will create an NFT version of this certificate
-                            and send it to the student's wallet.
+                            and send it to the student&apos;s wallet.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
@@ -491,9 +501,9 @@ export default function CertificatePage() {
 
             {/* Success Dialog */}
             {mintSuccess && (
-              <Card className="border-green-200 bg-green-50">
+              <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
                 <CardHeader>
-                  <CardTitle className="text-green-800">
+                  <CardTitle className="text-green-800 dark:text-green-300">
                     NFT Minted Successfully!
                   </CardTitle>
                 </CardHeader>
