@@ -25,9 +25,7 @@ import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
 import {
   mintCertificateNFT,
-  mintSimpleNFT,
   CertificateNFTMetadata,
-  verifyNFTForPhantom,
 } from "@/lib/mintCertificateNFT";
 
 interface OwnedCertificate extends Certificate {
@@ -103,23 +101,12 @@ export default function CollectablesPage() {
             await connection.getTokenAccountBalance(tokenAccount);
 
           if (accountInfo.value.uiAmount && accountInfo.value.uiAmount > 0) {
-            // Verify NFT is compatible with Phantom wallet
-            const phantomVerification = await verifyNFTForPhantom(
-              connection,
-              cert.nft_mint,
-            );
-
             verifiedCertificates.push({
               ...cert,
               tokenAccount: tokenAccount.toString(),
               balance: accountInfo.value.uiAmount,
-              phantomCompatible: phantomVerification.isValid,
-              metadataAccount: phantomVerification.metadataAccount,
             });
             console.log(`✅ Verified ownership of certificate: ${cert.id}`);
-            console.log(
-              `👻 Phantom compatible: ${phantomVerification.isValid}`,
-            );
           }
         } catch (error) {
           console.log(
@@ -222,12 +209,22 @@ export default function CollectablesPage() {
     try {
       console.log("🧪 Starting simple test mint...");
 
-      const result = await mintSimpleNFT(
+      // Create test certificate data
+      const testCertificateData: CertificateNFTMetadata = {
+        studentName: "Test Student",
+        rollNo: "TEST001",
+        courseName: "Test Course",
+        universityName: "Test University",
+        issuedDate: new Date().toLocaleDateString(),
+        certificateHash: "test-hash",
+        certificateUrl: "https://test-cert.com",
+        imageUrl: "https://test-image.com",
+      };
+
+      const result = await mintCertificateNFT(
         wallet.adapter,
         publicKey.toString(),
-        (step, progress) => {
-          console.log(`Progress: ${progress}% - ${step}`);
-        },
+        testCertificateData,
       );
 
       if (result.success) {
