@@ -23,6 +23,7 @@ import {
   XCircle,
   FileText,
   TrendingUp,
+  Users,
 } from "lucide-react";
 import { supabase, Certificate, Institution } from "@/lib/supabase";
 import toast, { Toaster } from "react-hot-toast";
@@ -153,6 +154,45 @@ export default function DashboardPage() {
                 Connect your wallet to access the certificate dashboard
               </p>
               <WalletMultiButton />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!institution && !loading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <Card className="max-w-md border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black dark:bg-white rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="w-8 h-8 text-white dark:text-black" />
+              </div>
+              <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
+                Register Your University
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Your wallet is not associated with any registered institution.
+                Please register your university to start issuing certificates.
+              </p>
+              <div className="flex flex-col space-y-3">
+                <Link href="/register-university">
+                  <Button className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Register University
+                  </Button>
+                </Link>
+                <Link href="/">
+                  <Button
+                    variant="outline"
+                    className="w-full border-gray-300 dark:border-gray-700"
+                  >
+                    Back to Home
+                  </Button>
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -43,6 +43,12 @@ export default function HomePage() {
                 Features
               </Link>
               <Link
+                href="/register-university"
+                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
+              >
+                Register University
+              </Link>
+              <Link
                 href="/dashboard"
                 className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
               >
@@ -53,6 +59,12 @@ export default function HomePage() {
                 className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
               >
                 Demo
+              </Link>
+              <Link
+                href="/debug"
+                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
+              >
+                Debug
               </Link>
             </nav>
 
@@ -274,6 +286,14 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                 <li>
                   <Link
+                    href="/register-university"
+                    className="hover:text-black dark:hover:text-white"
+                  >
+                    Register University
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/dashboard"
                     className="hover:text-black dark:hover:text-white"
                   >
@@ -294,6 +314,22 @@ export default function HomePage() {
                     className="hover:text-black dark:hover:text-white"
                   >
                     Demo
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/admin"
+                    className="hover:text-black dark:hover:text-white"
+                  >
+                    Admin
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/debug"
+                    className="hover:text-black dark:hover:text-white"
+                  >
+                    Debug
                   </Link>
                 </li>
               </ul>

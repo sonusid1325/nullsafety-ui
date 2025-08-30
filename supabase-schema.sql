@@ -9,7 +9,18 @@ CREATE TABLE institutions (
     name VARCHAR(255) NOT NULL,
     location VARCHAR(255) NOT NULL,
     authority_wallet VARCHAR(44) UNIQUE NOT NULL,
+    type VARCHAR(100) DEFAULT 'University',
+    website VARCHAR(255),
+    contact_email VARCHAR(255),
+    contact_phone VARCHAR(50),
+    description TEXT,
+    established_year INTEGER,
+    accreditation VARCHAR(255),
     is_verified BOOLEAN DEFAULT FALSE,
+    verification_requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    verified_at TIMESTAMP WITH TIME ZONE,
+    verified_by VARCHAR(44),
+    rejection_reason TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
