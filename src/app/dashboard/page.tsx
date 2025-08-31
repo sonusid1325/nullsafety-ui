@@ -108,7 +108,7 @@ export default function DashboardPage() {
         certificate_id: `CERT-${Date.now()}`,
         institution_name: institution.name,
         issued_by: publicKey.toString(),
-        issued_date: new Date().toISOString(),
+        issued_date: new Date().toISOString().split("T")[0],
         certificate_hash: `hash-${Date.now()}`, // In production, generate proper hash
         is_revoked: false,
       };

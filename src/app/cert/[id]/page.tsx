@@ -29,26 +29,77 @@ export default function CertificatePage() {
   const fetchCertificate = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("certificates")
-        .select(
-          `
-          *,
-          institutions (
-            name,
-            logo_url
-          )
-        `,
-        )
-        .eq("id", params.id)
-        .single();
+      console.log("Fetching certificate with ID:", params.id);
 
-      if (error) throw error;
+      // First try direct Supabase query
+      try {
+        const { data: certData, error: certError } = await supabase
+          .from("certificates")
+          .select("*")
+          .eq("id", params.id)
+          .single();
 
-      setCertificate(data);
+        if (certError) {
+          if (certError.code === "PGRST116") {
+            toast.error("Certificate not found");
+            return;
+          }
+          throw certError;
+        }
+
+        console.log("Certificate data (direct query):", certData);
+
+        // Try to fetch matching institution data based on institution_name
+        if (certData.institution_name) {
+          const { data: institutionData } = await supabase
+            .from("institutions")
+            .select("name, logo_url")
+            .eq("name", certData.institution_name)
+            .single();
+
+          if (institutionData) {
+            // Add institution data to certificate
+            const enrichedCertData = {
+              ...certData,
+              institutions: institutionData,
+            };
+            setCertificate(enrichedCertData);
+          } else {
+            setCertificate(certData);
+          }
+        } else {
+          setCertificate(certData);
+        }
+        return;
+      } catch (supabaseError) {
+        console.warn(
+          "Direct Supabase query failed, trying API:",
+          supabaseError,
+        );
+
+        // Fallback to API route
+        const response = await fetch(`/api/certificates/${params.id}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            toast.error("Certificate not found");
+            return;
+          }
+          throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const apiResult = await response.json();
+        if (apiResult.success) {
+          console.log("Certificate data (API):", apiResult.data);
+          setCertificate(apiResult.data);
+        } else {
+          throw new Error(apiResult.error || "API request failed");
+        }
+      }
     } catch (error) {
       console.error("Error fetching certificate:", error);
-      toast.error("Failed to load certificate");
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      toast.error(`Failed to load certificate: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -219,7 +270,7 @@ export default function CertificatePage() {
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">
                       {certificate.institutions?.name ||
-                        certificate.university_name}
+                        certificate.institution_name}
                     </h1>
                     <p className="text-gray-600">Certificate of Achievement</p>
                   </div>
@@ -254,9 +305,7 @@ export default function CertificatePage() {
                   <div>
                     <p className="text-sm text-gray-600">Issue Date</p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(
-                        certificate.issue_date || certificate.issued_date || "",
-                      ).toLocaleDateString()}
+                      {new Date(certificate.issued_date).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
@@ -424,9 +473,7 @@ export default function CertificatePage() {
                     Issue Date
                   </label>
                   <p className="text-sm text-black dark:text-white">
-                    {new Date(
-                      certificate.issue_date || certificate.issued_date || "",
-                    ).toLocaleDateString()}
+                    {new Date(certificate.issued_date).toLocaleDateString()}
                   </p>
                 </div>
                 <div>
@@ -435,7 +482,6 @@ export default function CertificatePage() {
                   </label>
                   <p className="text-sm text-black dark:text-white">
                     {certificate.institutions?.name ||
-                      certificate.university_name ||
                       certificate.institution_name}
                   </p>
                 </div>

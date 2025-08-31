@@ -14,12 +14,11 @@ export interface Certificate {
   grade: string;
   certificate_id: string;
   institution_name: string;
-  university_name?: string;
   issued_by: string;
-  issue_date: string;
-  issued_date?: string;
+  issued_date: string;
   certificate_hash: string;
   is_revoked: boolean;
+  verification_count: number;
   institutions?: {
     name: string;
     logo_url?: string;
