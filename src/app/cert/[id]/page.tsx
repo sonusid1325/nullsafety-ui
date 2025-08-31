@@ -116,12 +116,22 @@ export default function CertificatePage() {
 
     try {
       setDownloading("png");
+
+      // Add print class to optimize for download
+      certificateRef.current.classList.add("print-mode");
+
       const canvas = await html2canvas(certificateRef.current, {
-        backgroundColor: "white",
+        backgroundColor: "#000000",
         scale: 2,
         logging: false,
         useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
       });
+
+      // Remove print class
+      certificateRef.current.classList.remove("print-mode");
 
       const link = document.createElement("a");
       link.download = `certificate-${certificate?.student_name?.replace(/\s+/g, "-")}.png`;
@@ -142,12 +152,22 @@ export default function CertificatePage() {
 
     try {
       setDownloading("pdf");
+
+      // Add print class to optimize for download
+      certificateRef.current.classList.add("print-mode");
+
       const canvas = await html2canvas(certificateRef.current, {
-        backgroundColor: "white",
+        backgroundColor: "#000000",
         scale: 2,
         logging: false,
         useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
       });
+
+      // Remove print class
+      certificateRef.current.classList.remove("print-mode");
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("l", "mm", "a4");
@@ -255,6 +275,13 @@ export default function CertificatePage() {
               ref={certificateRef}
               className="bg-black border-2 border-white/20 rounded-lg shadow-2xl p-12 relative overflow-hidden"
             >
+              <style jsx>{`
+                .print-mode {
+                  position: relative !important;
+                  box-shadow: none !important;
+                  transform: scale(1) !important;
+                }
+              `}</style>
               {/* Certificate Header */}
               <div className="text-center mb-8">
                 <div className="flex items-center justify-center space-x-4 mb-4">
