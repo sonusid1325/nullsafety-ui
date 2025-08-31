@@ -18,6 +18,9 @@ import {
   UserCheck,
   Building,
   Search,
+  GraduationCap,
+  School,
+  LibraryBig,
 } from "lucide-react";
 import { supabase, Institution } from "@/lib/supabase";
 
@@ -276,9 +279,7 @@ export function Navbar({ className }: NavbarProps) {
           <div className="flex justify-between items-center">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center">
-                <Award className="w-5 h-5 text-white dark:text-black" />
-              </div>
+              <LibraryBig className="dark:text-white text-black h-10 w-10" />
               <span className="text-xl font-medium text-black dark:text-white">
                 NullSafety
               </span>
