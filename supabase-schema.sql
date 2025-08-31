@@ -38,8 +38,7 @@ CREATE TABLE certificates (
     issued_date DATE NOT NULL,
     certificate_hash VARCHAR(128) UNIQUE NOT NULL,
     is_revoked BOOLEAN DEFAULT FALSE,
-    student_wallet VARCHAR(44), -- Optional: for NFT minting
-    nft_mint VARCHAR(44), -- Optional: NFT mint address
+
     verification_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -73,7 +72,7 @@ CREATE INDEX idx_certificates_certificate_id ON certificates(certificate_id);
 CREATE INDEX idx_certificates_institution_name ON certificates(institution_name);
 CREATE INDEX idx_certificates_issued_by ON certificates(issued_by);
 CREATE INDEX idx_certificates_is_revoked ON certificates(is_revoked);
-CREATE INDEX idx_certificates_student_wallet ON certificates(student_wallet);
+
 CREATE INDEX idx_institutions_authority_wallet ON institutions(authority_wallet);
 CREATE INDEX idx_institutions_is_verified ON institutions(is_verified);
 CREATE INDEX idx_certificate_verifications_certificate_id ON certificate_verifications(certificate_id);
@@ -228,8 +227,6 @@ RETURNS TABLE(
     issued_date DATE,
     certificate_hash VARCHAR,
     is_revoked BOOLEAN,
-    student_wallet VARCHAR,
-    nft_mint VARCHAR,
     verification_count INTEGER,
     created_at TIMESTAMP WITH TIME ZONE
 ) AS $$
@@ -237,8 +234,7 @@ BEGIN
     RETURN QUERY
     SELECT c.id, c.student_name, c.roll_no, c.course_name, c.grade,
            c.certificate_id, c.institution_name, c.issued_by, c.issued_date,
-           c.certificate_hash, c.is_revoked, c.student_wallet, c.nft_mint,
-           c.verification_count, c.created_at
+           c.certificate_hash, c.is_revoked, c.verification_count, c.created_at
     FROM certificates c
     WHERE c.id = cert_id;
 END;

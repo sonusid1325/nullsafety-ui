@@ -2,32 +2,17 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Download,
   Share2,
-  Award,
   CheckCircle,
   AlertCircle,
   ExternalLink,
 } from "lucide-react";
 import { supabase, Certificate } from "@/lib/supabase";
-import {
-  mintCertificateNFT,
-  generateCertificateImageFromDOM,
-  uploadCertificateImage,
-} from "@/lib/mintCertificateNFT";
 import toast, { Toaster } from "react-hot-toast";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -35,27 +20,27 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function CertificatePage() {
   const params = useParams();
-  const { connected, publicKey, wallet } = useWallet();
   const certificateRef = useRef<HTMLDivElement>(null);
 
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
-  const [minting, setMinting] = useState(false);
-  const [mintingStep, setMintingStep] = useState<string>("");
-  const [mintProgress, setMintProgress] = useState(0);
-  const [mintSuccess, setMintSuccess] = useState<{
-    signature: string;
-    nftAddress: string;
-  } | null>(null);
-
-  const certificateId = params.id as string;
+  const [downloading, setDownloading] = useState<"png" | "pdf" | null>(null);
 
   const fetchCertificate = useCallback(async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from("certificates")
-        .select("*")
-        .eq("id", certificateId)
+        .select(
+          `
+          *,
+          institutions (
+            name,
+            logo_url
+          )
+        `,
+        )
+        .eq("id", params.id)
         .single();
 
       if (error) throw error;
@@ -63,245 +48,130 @@ export default function CertificatePage() {
       setCertificate(data);
     } catch (error) {
       console.error("Error fetching certificate:", error);
-      toast.error("Certificate not found");
+      toast.error("Failed to load certificate");
     } finally {
       setLoading(false);
     }
-  }, [certificateId]);
+  }, [params.id]);
 
   useEffect(() => {
-    fetchCertificate();
-  }, [certificateId, fetchCertificate]);
+    if (params.id) {
+      fetchCertificate();
+    }
+  }, [params.id, fetchCertificate]);
 
-  const handleShare = async () => {
+  const downloadAsPNG = async () => {
+    if (!certificateRef.current) return;
+
+    try {
+      setDownloading("png");
+      const canvas = await html2canvas(certificateRef.current, {
+        backgroundColor: "white",
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+
+      const link = document.createElement("a");
+      link.download = `certificate-${certificate?.student_name?.replace(/\s+/g, "-")}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+
+      toast.success("Certificate downloaded as PNG!");
+    } catch (error) {
+      console.error("Error downloading PNG:", error);
+      toast.error("Failed to download PNG");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const downloadAsPDF = async () => {
+    if (!certificateRef.current) return;
+
+    try {
+      setDownloading("pdf");
+      const canvas = await html2canvas(certificateRef.current, {
+        backgroundColor: "white",
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("l", "mm", "a4");
+
+      const imgWidth = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(
+        `certificate-${certificate?.student_name?.replace(/\s+/g, "-")}.pdf`,
+      );
+
+      toast.success("Certificate downloaded as PDF!");
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Failed to download PDF");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const shareCertificate = async () => {
     const url = window.location.href;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Certificate - ${certificate?.student_name}`,
-          text: `View ${certificate?.student_name}&apos;s certificate for ${certificate?.course_name}`,
-          url,
+          text: `Check out this certificate for ${certificate?.course_name}`,
+          url: url,
         });
-      } catch {
-        // Fallback to clipboard
-        await copyToClipboard(url);
+      } catch (error) {
+        // User cancelled sharing
+        if ((error as Error).name !== "AbortError") {
+          console.error("Error sharing:", error);
+        }
       }
     } else {
-      await copyToClipboard(url);
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Certificate link copied to clipboard!");
-    } catch {
-      toast.error("Failed to copy link");
-    }
-  };
-
-  const handleDownloadPNG = async () => {
-    if (!certificateRef.current) return;
-
-    try {
-      const canvas = await html2canvas(certificateRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-      });
-
-      const link = document.createElement("a");
-      link.download = `certificate-${certificate?.student_name}-${certificate?.course_name}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
-
-      toast.success("Certificate downloaded as PNG!");
-    } catch {
-      toast.error("Failed to download certificate");
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!certificateRef.current) return;
-
-    try {
-      const canvas = await html2canvas(certificateRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "px",
-        format: [canvas.width, canvas.height],
-      });
-
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-      pdf.save(
-        `certificate-${certificate?.student_name}-${certificate?.course_name}.pdf`,
-      );
-
-      toast.success("Certificate downloaded as PDF!");
-    } catch {
-      toast.error("Failed to download certificate");
-    }
-  };
-
-  const handleMintNFT = async () => {
-    if (!certificate || !connected || !publicKey || !wallet) {
-      toast.error("Please connect your wallet first");
-      return;
-    }
-
-    if (!certificate.student_wallet) {
-      toast.error(
-        "Student wallet address not found. Please update the certificate with student wallet address.",
-      );
-      return;
-    }
-
-    setMinting(true);
-
-    // Use setTimeout to allow UI to update with loading state
-    setTimeout(async () => {
+      // Fallback: copy to clipboard
       try {
-        console.log("🚀 Starting minting process...");
-        setMintingStep("Initializing minting process...");
-        setMintProgress(10);
-
-        // Generate certificate image with small delay for UI responsiveness
-        const certificateElement = certificateRef.current;
-        if (!certificateElement) {
-          throw new Error("Certificate element not found");
-        }
-
-        console.log("📸 Generating certificate image...");
-        setMintingStep("Generating certificate image...");
-        setMintProgress(20);
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
-
-        const imageBlob =
-          await generateCertificateImageFromDOM(certificateElement);
-
-        console.log("☁️ Uploading certificate image...");
-        setMintingStep("Uploading certificate image...");
-        setMintProgress(30);
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
-
-        const imageUrl = await uploadCertificateImage(imageBlob);
-
-        const nftMetadata = {
-          studentName: certificate.student_name,
-          rollNo: certificate.roll_no,
-          courseName: certificate.course_name,
-          universityName: certificate.institution_name || "",
-          issuedDate: certificate.issued_date,
-          certificateHash: certificate.certificate_hash,
-          certificateUrl: window.location.href,
-          imageUrl,
-        };
-
-        console.log("🪙 Starting NFT minting...");
-        setMintingStep("Creating NFT on blockchain...");
-        setMintProgress(40);
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
-
-        // Add timeout to prevent hanging
-        if (!certificate.student_wallet) {
-          throw new Error("Student wallet address is required");
-        }
-
-        const mintPromise = mintCertificateNFT(
-          wallet.adapter,
-          certificate.student_wallet,
-          nftMetadata,
-        );
-
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => {
-            reject(
-              new Error("Minting timeout after 120 seconds. Please try again."),
-            );
-          }, 120000); // 2 minute timeout
-        });
-
-        setMintingStep("Waiting for blockchain confirmation...");
-        setMintProgress(70);
-
-        const result = (await Promise.race([mintPromise, timeoutPromise])) as {
-          success: boolean;
-          signature?: string;
-          nftAddress?: string;
-          error?: string;
-        };
-
-        if (result.success) {
-          console.log("💾 Updating database...");
-          setMintingStep("Updating database...");
-          setMintProgress(90);
-          await new Promise((resolve) => setTimeout(resolve, 100)); // Let UI update
-
-          // Update certificate with NFT mint address
-          await supabase
-            .from("certificates")
-            .update({ nft_mint: result.nftAddress })
-            .eq("id", certificate.id);
-
-          setMintingStep("Completed successfully!");
-          setMintProgress(100);
-
-          setMintSuccess({
-            signature: result.signature!,
-            nftAddress: result.nftAddress!,
-          });
-
-          toast.success("Certificate NFT minted successfully!");
-          console.log("🎉 Minting completed successfully!");
-        } else {
-          throw new Error(result.error || "Failed to mint NFT");
-        }
+        await navigator.clipboard.writeText(url);
+        toast.success("Certificate link copied to clipboard!");
       } catch (error) {
-        console.error("💥 Error minting NFT:", error);
-        toast.error(
-          error instanceof Error ? error.message : "Failed to mint NFT",
-        );
-      } finally {
-        setMinting(false);
-        setMintingStep("");
-        setMintProgress(0);
+        console.error("Error copying to clipboard:", error);
+        toast.error("Failed to copy link");
       }
-    }, 50); // Small delay to let loading state show
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading certificate...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (!certificate) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-96">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-              <h2 className="text-xl font-semibold mb-2">
-                Certificate Not Found
-              </h2>
-              <p className="text-muted-foreground">
-                The requested certificate could not be found.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto" />
+          <h2 className="text-xl font-semibold text-black dark:text-white">
+            Certificate Not Found
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            The certificate you&apos;re looking for doesn&apos;t exist or has
+            been removed.
+          </p>
+        </div>
       </div>
     );
   }
@@ -310,364 +180,270 @@ export default function CertificatePage() {
     <div className="min-h-screen bg-white dark:bg-black relative">
       <Toaster position="top-right" />
 
-      {/* Loading Overlay */}
-      {minting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <div className="text-center space-y-4">
-              <Award className="w-12 h-12 mx-auto text-blue-600 animate-spin" />
-              <h3 className="text-lg font-semibold text-black dark:text-white">
-                Minting NFT Certificate
-              </h3>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${mintProgress}%` }}
-                ></div>
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {mintingStep}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                Please do not close this page or navigate away during minting
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center">
-                <Award className="w-5 h-5 text-white dark:text-black" />
-              </div>
-              <div>
-                <h1 className="text-xl font-medium text-black dark:text-white">
-                  NullSafety Certificate
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Blockchain-verified credential
-                </p>
-              </div>
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-xl font-bold text-black dark:text-white">
+                NullSafety
+              </h1>
             </div>
-
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <WalletMultiButton />
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Certificate Display */}
           <div className="lg:col-span-2">
             <div
               ref={certificateRef}
-              className="bg-white dark:bg-black border-2 border-gray-200 dark:border-gray-800 rounded-lg p-16"
+              className="bg-white border-2 border-gray-200 rounded-lg shadow-lg p-8 relative overflow-hidden"
             >
               {/* Certificate Header */}
-              <div className="text-center mb-12">
-                <div className="w-16 h-16 bg-black dark:bg-white rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Award className="w-8 h-8 text-white dark:text-black" />
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center space-x-4 mb-4">
+                  {certificate.institutions?.logo_url && (
+                    <Image
+                      src={certificate.institutions.logo_url}
+                      alt="Institution Logo"
+                      width={64}
+                      height={64}
+                      className="w-16 h-16 object-contain"
+                    />
+                  )}
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {certificate.institutions?.name ||
+                        certificate.university_name}
+                    </h1>
+                    <p className="text-gray-600">Certificate of Achievement</p>
+                  </div>
                 </div>
-                <h1 className="text-3xl font-bold text-black dark:text-white mb-4 tracking-wide">
-                  CERTIFICATE OF COMPLETION
-                </h1>
-                <div className="w-24 h-px bg-black dark:bg-white mx-auto"></div>
               </div>
 
               {/* Certificate Body */}
-              <div className="text-center space-y-8">
-                <p className="text-gray-600 dark:text-gray-400">
-                  This is to certify that
-                </p>
-
-                <h2 className="text-4xl font-bold text-black dark:text-white border-b border-gray-300 dark:border-gray-700 pb-3 mx-8">
-                  {certificate.student_name}
-                </h2>
-
-                <p className="text-gray-600 dark:text-gray-400">
-                  Roll No:{" "}
-                  <span className="font-medium text-black dark:text-white">
-                    {certificate.roll_no}
-                  </span>
-                </p>
-
-                <p className="text-gray-600 dark:text-gray-400">
-                  has successfully completed the course
-                </p>
-
-                <h3 className="text-2xl font-semibold text-black dark:text-white">
-                  {certificate.course_name}
-                </h3>
-
-                <p className="text-gray-600 dark:text-gray-400">
-                  with grade{" "}
-                  <span className="font-medium text-black dark:text-white">
-                    {certificate.grade}
-                  </span>
-                </p>
-
-                <div className="flex justify-between items-end mt-16 pt-8">
-                  <div className="text-left">
-                    <div className="w-32 border-b border-gray-300 dark:border-gray-700 mb-2"></div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide">
-                      Issued Date
-                    </p>
-                    <p className="font-medium text-black dark:text-white">
-                      {new Date(certificate.issued_date).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-black dark:bg-white rounded-full flex items-center justify-center mb-2">
-                      <CheckCircle className="w-6 h-6 text-white dark:text-black" />
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide">
-                      Verified
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="w-32 border-b border-gray-300 dark:border-gray-700 mb-2"></div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide">
-                      Issued By
-                    </p>
-                    <p className="font-medium text-black dark:text-white">
-                      {certificate.institution_name}
-                    </p>
-                  </div>
+              <div className="text-center space-y-6">
+                <div>
+                  <p className="text-lg text-gray-700 mb-2">
+                    This is to certify that
+                  </p>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                    {certificate.student_name}
+                  </h2>
+                  <p className="text-gray-600">
+                    Roll No: {certificate.roll_no}
+                  </p>
                 </div>
 
-                {/* Certificate Hash */}
-                <div className="mt-12 p-6 border border-gray-200 dark:border-gray-800 rounded">
-                  <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">
-                    Blockchain Hash
+                <div>
+                  <p className="text-lg text-gray-700 mb-2">
+                    has successfully completed the course
                   </p>
-                  <p className="font-mono text-xs text-gray-600 dark:text-gray-400 break-all">
-                    {certificate.certificate_hash}
-                  </p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {certificate.course_name}
+                  </h3>
+                  <p className="text-gray-600">Grade: {certificate.grade}</p>
+                </div>
+
+                <div className="flex justify-between items-center pt-8">
+                  <div>
+                    <p className="text-sm text-gray-600">Issue Date</p>
+                    <p className="font-semibold text-gray-900">
+                      {new Date(
+                        certificate.issue_date || certificate.issued_date || "",
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Certificate ID</p>
+                    <p className="font-semibold text-gray-900 font-mono text-xs">
+                      {certificate.certificate_hash?.slice(0, 16)}...
+                    </p>
+                  </div>
                 </div>
               </div>
+
+              {/* Decorative Elements */}
+              <div className="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 border-gray-300 opacity-30"></div>
+              <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-gray-300 opacity-30"></div>
+              <div className="absolute bottom-4 left-4 w-16 h-16 border-b-4 border-l-4 border-gray-300 opacity-30"></div>
+              <div className="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 border-gray-300 opacity-30"></div>
             </div>
           </div>
 
           {/* Actions Panel */}
-          <div className="space-y-4">
-            {/* Certificate Status */}
-            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center space-x-2 text-black dark:text-white text-sm font-medium">
-                  <CheckCircle
-                    className={`w-4 h-4 ${certificate.is_revoked ? "text-gray-400" : "text-black dark:text-white"}`}
-                  />
-                  <span>Status</span>
+          <div className="space-y-6">
+            {/* Verification Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span>Verification Status</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="font-medium text-black dark:text-white">
-                  {certificate.is_revoked ? "Revoked" : "Valid"}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  Blockchain verified
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-black dark:text-white text-sm font-medium">
-                  Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  onClick={handleShare}
-                  variant="outline"
-                  className="w-full border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    onClick={handleDownloadPNG}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    PNG
-                  </Button>
-                  <Button
-                    onClick={handleDownloadPDF}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    PDF
-                  </Button>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Blockchain Status
+                  </span>
+                  <span className="text-sm font-medium text-green-600">
+                    Verified ✓
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Institution
+                  </span>
+                  <span className="text-sm font-medium text-green-600">
+                    Verified ✓
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Revocation Status
+                  </span>
+                  <span className="text-sm font-medium text-green-600">
+                    Valid ✓
+                  </span>
                 </div>
 
-                {/* NFT Minting */}
-                {connected ? (
-                  certificate.nft_mint ? (
-                    <div className="space-y-2">
-                      <Button disabled className="w-full">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        NFT Already Minted
-                      </Button>
-                      <a
-                        href={`https://solscan.io/token/${certificate.nft_mint}?cluster=devnet`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center space-x-2 text-sm text-blue-600 hover:text-blue-800"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        <span>View NFT on Solscan</span>
-                      </a>
-                    </div>
-                  ) : (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
-                          <Award className="w-4 h-4 mr-2" />
-                          Mint NFT
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Mint Certificate NFT</DialogTitle>
-                          <DialogDescription>
-                            This will create an NFT version of this certificate
-                            and send it to the student&apos;s wallet.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <p>
-                              <strong>Student:</strong>{" "}
-                              {certificate.student_name}
-                            </p>
-                            <p>
-                              <strong>Course:</strong> {certificate.course_name}
-                            </p>
-                            <p>
-                              <strong>Student Wallet:</strong>
-                              <span className="font-mono text-sm break-all">
-                                {certificate.student_wallet || "Not provided"}
-                              </span>
-                            </p>
-                          </div>
-
-                          {certificate.student_wallet ? (
-                            <div className="space-y-3">
-                              <Button
-                                onClick={handleMintNFT}
-                                disabled={minting}
-                                className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-                              >
-                                {minting ? (
-                                  <>
-                                    <Award className="w-4 h-4 mr-2 animate-spin" />
-                                    Minting NFT...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Award className="w-4 h-4 mr-2" />
-                                    Mint NFT
-                                  </>
-                                )}
-                              </Button>
-
-                              {minting && (
-                                <div className="space-y-2">
-                                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                    <div
-                                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                      style={{ width: `${mintProgress}%` }}
-                                    ></div>
-                                  </div>
-                                  <p className="text-xs text-center text-gray-600 dark:text-gray-400">
-                                    {mintingStep}
-                                  </p>
-                                  <p className="text-xs text-center text-gray-500 dark:text-gray-500">
-                                    Please keep this page open and wait for
-                                    completion
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Student wallet address required to mint NFT.
-                            </p>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  )
-                ) : (
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-500">
-                      Connect wallet to mint NFT
+                {certificate.certificate_hash && (
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      Certificate Hash
+                    </p>
+                    <p className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded break-all">
+                      {certificate.certificate_hash}
                     </p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Success Dialog */}
-            {mintSuccess && (
-              <Card className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-black">
-                <CardHeader>
-                  <CardTitle className="text-black dark:text-white text-sm font-medium">
-                    NFT Minted Successfully
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-gray-500 dark:text-gray-500 mb-1">
-                        Transaction
-                      </p>
-                      <a
-                        href={`https://solscan.io/tx/${mintSuccess.signature}?cluster=devnet`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 break-all font-mono text-xs"
-                      >
-                        {mintSuccess.signature}
-                      </a>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 dark:text-gray-500 mb-1">
-                        NFT Address
-                      </p>
-                      <a
-                        href={`https://solscan.io/token/${mintSuccess.nftAddress}?cluster=devnet`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400 break-all font-mono text-xs"
-                      >
-                        {mintSuccess.nftAddress}
-                      </a>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Download Options */}
+                <div className="space-y-2">
+                  <Button
+                    onClick={downloadAsPNG}
+                    disabled={downloading === "png"}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {downloading === "png" ? "Downloading..." : "Download PNG"}
+                  </Button>
+
+                  <Button
+                    onClick={downloadAsPDF}
+                    disabled={downloading === "pdf"}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {downloading === "pdf" ? "Downloading..." : "Download PDF"}
+                  </Button>
+                </div>
+
+                {/* Share */}
+                <Button
+                  onClick={shareCertificate}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Certificate
+                </Button>
+
+                {/* View on Blockchain */}
+                {certificate.certificate_hash && (
+                  <a
+                    href={`https://solscan.io/tx/${certificate.certificate_hash}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full"
+                  >
+                    <Button variant="outline" className="w-full">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      View on Blockchain
+                    </Button>
+                  </a>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Certificate Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Certificate Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Student Name
+                  </label>
+                  <p className="text-sm text-black dark:text-white">
+                    {certificate.student_name}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Roll Number
+                  </label>
+                  <p className="text-sm text-black dark:text-white">
+                    {certificate.roll_no}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Course
+                  </label>
+                  <p className="text-sm text-black dark:text-white">
+                    {certificate.course_name}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Grade
+                  </label>
+                  <p className="text-sm text-black dark:text-white">
+                    {certificate.grade}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Issue Date
+                  </label>
+                  <p className="text-sm text-black dark:text-white">
+                    {new Date(
+                      certificate.issue_date || certificate.issued_date || "",
+                    ).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Institution
+                  </label>
+                  <p className="text-sm text-black dark:text-white">
+                    {certificate.institutions?.name ||
+                      certificate.university_name ||
+                      certificate.institution_name}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

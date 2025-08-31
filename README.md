@@ -18,10 +18,10 @@ Team NullSafety has developed a comprehensive certificate verification system th
 - **Global Access**: Share and verify certificates worldwide
 - **Permanent URLs**: Each certificate has a unique, permanent link
 
-### 🎨 NFT Integration
-- **Mint as NFTs**: Transform certificates into tradeable digital assets
-- **Wallet Integration**: Seamless connection with Solana wallets
-- **Metaplex Protocol**: Built on industry-standard NFT framework
+### 🔗 Blockchain Integration
+- **Immutable Storage**: Certificates stored permanently on blockchain
+- **Cryptographic Verification**: Each certificate has unique blockchain hash
+- **Transparent Records**: All certificate data publicly verifiable
 
 ### 🎨 Modern Design
 - **Minimal Aesthetic**: Clean black and white design system
@@ -40,8 +40,7 @@ Team NullSafety has developed a comprehensive certificate verification system th
 ### Blockchain
 - **Solana**: High-performance blockchain
 - **@solana/web3.js**: Solana JavaScript SDK
-- **@solana/wallet-adapter**: Wallet integration
-- **Metaplex SDK**: NFT minting and metadata
+- **@solana/wallet-adapter**: Wallet integration for admin functions
 
 ### Backend & Database
 - **Supabase**: PostgreSQL database and authentication
@@ -112,7 +111,6 @@ src/
 │   └── WalletProvider.tsx       # Solana wallet setup
 ├── lib/                         # Utility functions
 │   ├── supabase.ts              # Database client
-│   ├── mintCertificateNFT.ts    # NFT minting logic
 │   └── utils.ts                 # Helper functions
 └── globals.css                  # Global styles
 ```
@@ -143,7 +141,6 @@ All components follow the minimal design principles:
 ### Certificate Viewer (`/cert/[id]`)
 - **View Certificates**: Display blockchain-verified credentials
 - **Download Options**: PNG and PDF export
-- **NFT Minting**: Transform certificates into NFTs
 - **Share Functionality**: Social sharing and link copying
 - **Verification Status**: Real-time blockchain verification
 
@@ -166,7 +163,6 @@ All components follow the minimal design principles:
 - Basic certificate information
 - Student details and grades
 - Blockchain hash and verification status
-- NFT mint address (when minted)
 
 #### `institutions`
 - Institution registration data
@@ -177,13 +173,8 @@ All components follow the minimal design principles:
 
 ### Solana Network
 - **Network**: Devnet (testing) / Mainnet (production)
-- **Wallet Support**: Phantom, Solflare, and other Solana wallets
-- **Transaction Fees**: Low-cost Solana transactions
-
-### NFT Minting
-- **Metaplex Standard**: Industry-standard NFT protocol
-- **Metadata Storage**: IPFS for decentralized storage
-- **Ownership Transfer**: Direct to student wallets
+- **Wallet Support**: Phantom, Solflare, and other Solana wallets (for admin functions)
+- **Transaction Fees**: Low-cost Solana transactions for certificate registration
 
 ## 🚀 Deployment
 
@@ -215,11 +206,11 @@ npx tsc --noEmit
 npm run lint
 ```
 
-### Wallet Testing
+### Admin Wallet Setup
 1. Install Phantom wallet
 2. Switch to Devnet
 3. Get devnet SOL from faucet
-4. Test certificate minting
+4. Test certificate creation (admin functions)
 
 ## 🔒 Security Considerations
 
@@ -237,11 +228,11 @@ npm run lint
 3. **Global Verification**: Verify from anywhere in the world
 4. **Instant Results**: Real-time verification status
 
-### NFT Functionality
-1. **One-Click Minting**: Transform certificates to NFTs
-2. **Student Ownership**: NFTs sent directly to student wallets
-3. **Tradeable Assets**: Can be bought, sold, or transferred
-4. **Permanent Records**: Stored on-chain permanently
+### Certificate Management
+1. **Instant Verification**: Real-time certificate validation
+2. **Permanent Storage**: Certificates stored immutably on blockchain
+3. **Download Options**: PNG and PDF export functionality
+4. **Global Access**: Certificates accessible from anywhere
 
 ### Institution Management
 1. **Multi-Institution**: Support for multiple educational institutions

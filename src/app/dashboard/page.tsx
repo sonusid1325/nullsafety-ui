@@ -18,7 +18,6 @@ import {
   Award,
   Plus,
   Eye,
-  ExternalLink,
   CheckCircle,
   XCircle,
   FileText,
@@ -35,7 +34,6 @@ interface CertificateFormData {
   roll_no: string;
   course_name: string;
   grade: string;
-  student_wallet: string;
 }
 
 export default function DashboardPage() {
@@ -49,7 +47,6 @@ export default function DashboardPage() {
     roll_no: "",
     course_name: "",
     grade: "",
-    student_wallet: "",
   });
 
   const fetchInstitutionData = useCallback(async () => {
@@ -129,7 +126,6 @@ export default function DashboardPage() {
         roll_no: "",
         course_name: "",
         grade: "",
-        student_wallet: "",
       });
       fetchCertificates();
     } catch (error) {
@@ -278,13 +274,13 @@ export default function DashboardPage() {
           <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                NFT Minted
+                Active Certificates
               </CardTitle>
               <Award className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-black dark:text-white">
-                {certificates.filter((cert) => cert.nft_mint).length}
+                {certificates.filter((cert) => !cert.is_revoked).length}
               </div>
             </CardContent>
           </Card>
@@ -405,24 +401,6 @@ export default function DashboardPage() {
                       }
                     />
                   </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-black dark:text-white">
-                      Student Wallet Address (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white text-sm font-mono"
-                      value={formData.student_wallet}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          student_wallet: e.target.value,
-                        })
-                      }
-                      placeholder="Solana wallet address for NFT minting"
-                    />
-                  </div>
                 </div>
 
                 <DialogFooter>
@@ -485,9 +463,6 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="flex items-center space-x-1">
-                        {certificate.nft_mint && (
-                          <Award className="h-4 w-4 text-black dark:text-white" />
-                        )}
                         {certificate.is_revoked ? (
                           <XCircle className="h-4 w-4 text-gray-400" />
                         ) : (
@@ -522,22 +497,6 @@ export default function DashboardPage() {
                             View
                           </Button>
                         </Link>
-
-                        {certificate.nft_mint && (
-                          <a
-                            href={`https://solscan.io/token/${certificate.nft_mint}?cluster=devnet`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-3 border-gray-300 dark:border-gray-700 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                            </Button>
-                          </a>
-                        )}
                       </div>
                     </div>
                   </CardContent>
