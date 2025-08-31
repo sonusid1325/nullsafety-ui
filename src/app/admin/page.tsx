@@ -22,7 +22,7 @@ import {
 import { supabase, Institution } from "@/lib/supabase";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 
 // Admin wallet addresses that can access this panel
 const ADMIN_WALLETS = [
@@ -215,43 +215,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-white dark:bg-black">
       <Toaster position="top-right" />
 
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white dark:text-black" />
-              </div>
-              <div>
-                <h1 className="text-xl font-medium text-black dark:text-white">
-                  NullSafety Admin
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  University Verification Panel
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Home
-              </Link>
-              <Link
-                href="/dashboard"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Dashboard
-              </Link>
-              <ThemeToggle />
-              <WalletMultiButton />
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Stats Overview */}

@@ -253,7 +253,7 @@ export default function CertificatePage() {
           <div className="lg:col-span-2">
             <div
               ref={certificateRef}
-              className="bg-white border-2 border-gray-200 rounded-lg shadow-lg p-8 relative overflow-hidden"
+              className="bg-black border-2 border-white/20 rounded-lg shadow-2xl p-12 relative overflow-hidden"
             >
               {/* Certificate Header */}
               <div className="text-center mb-8">
@@ -268,49 +268,63 @@ export default function CertificatePage() {
                     />
                   )}
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-3xl font-bold text-white border-b border-white/30 pb-2">
                       {certificate.institutions?.name ||
                         certificate.institution_name}
                     </h1>
-                    <p className="text-gray-600">Certificate of Achievement</p>
+                    <p className="text-gray-200 text-lg mt-2 font-light">
+                      Certificate of Achievement
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Certificate Body */}
-              <div className="text-center space-y-6">
-                <div>
-                  <p className="text-lg text-gray-700 mb-2">
+              <div className="text-center space-y-8 border border-white/10 rounded-lg p-8 bg-gray-950/50">
+                <div className="border-l-4 border-white/40 pl-6">
+                  <p className="text-xl text-gray-100 mb-3 font-light uppercase tracking-wide">
                     This is to certify that
                   </p>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-5xl font-bold text-white mb-3 tracking-wide text-shadow-lg border-b-2 border-white/20 pb-2 inline-block">
                     {certificate.student_name}
                   </h2>
-                  <p className="text-gray-600">
-                    Roll No: {certificate.roll_no}
+                  <p className="text-gray-200 text-lg font-medium">
+                    Roll No:{" "}
+                    <span className="font-mono bg-white/10 px-2 py-1 rounded border border-white/20">
+                      {certificate.roll_no}
+                    </span>
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-lg text-gray-700 mb-2">
+                <div className="border-r-4 border-white/40 pr-6">
+                  <p className="text-xl text-gray-100 mb-3 font-light uppercase tracking-wide">
                     has successfully completed the course
                   </p>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-3xl font-bold text-white mb-3 border border-white/30 p-4 rounded bg-gray-900/50">
                     {certificate.course_name}
                   </h3>
-                  <p className="text-gray-600">Grade: {certificate.grade}</p>
+                  <p className="text-gray-200 text-lg">
+                    Grade:{" "}
+                    <span className="font-bold text-white bg-white/10 px-3 py-1 rounded-full border border-white/30">
+                      {certificate.grade}
+                    </span>
+                  </p>
                 </div>
 
-                <div className="flex justify-between items-center pt-8">
-                  <div>
-                    <p className="text-sm text-gray-600">Issue Date</p>
-                    <p className="font-semibold text-gray-900">
+                <div className="flex justify-between items-center pt-8 border-t border-white/20">
+                  <div className="border border-white/20 p-4 rounded bg-gray-900/30">
+                    <p className="text-sm text-gray-300 uppercase tracking-wider">
+                      Issue Date
+                    </p>
+                    <p className="font-bold text-white text-lg">
                       {new Date(certificate.issued_date).toLocaleDateString()}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Certificate ID</p>
-                    <p className="font-semibold text-gray-900 font-mono text-xs">
+                  <div className="border border-white/20 p-4 rounded bg-gray-900/30">
+                    <p className="text-sm text-gray-300 uppercase tracking-wider">
+                      Certificate ID
+                    </p>
+                    <p className="font-bold text-white font-mono text-sm">
                       {certificate.certificate_hash?.slice(0, 16)}...
                     </p>
                   </div>
@@ -318,10 +332,16 @@ export default function CertificatePage() {
               </div>
 
               {/* Decorative Elements */}
-              <div className="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 border-gray-300 opacity-30"></div>
-              <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 border-gray-300 opacity-30"></div>
-              <div className="absolute bottom-4 left-4 w-16 h-16 border-b-4 border-l-4 border-gray-300 opacity-30"></div>
-              <div className="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 border-gray-300 opacity-30"></div>
+              <div className="absolute top-6 left-6 w-20 h-20 border-t-4 border-l-4 border-white/40 opacity-60"></div>
+              <div className="absolute top-6 right-6 w-20 h-20 border-t-4 border-r-4 border-white/40 opacity-60"></div>
+              <div className="absolute bottom-6 left-6 w-20 h-20 border-b-4 border-l-4 border-white/40 opacity-60"></div>
+              <div className="absolute bottom-6 right-6 w-20 h-20 border-b-4 border-r-4 border-white/40 opacity-60"></div>
+
+              {/* Additional decorative lines */}
+              <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-white/20 via-transparent to-white/20"></div>
+              <div className="absolute top-0 right-1/4 w-px h-full bg-gradient-to-b from-white/20 via-transparent to-white/20"></div>
+              <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-white/20 via-transparent to-white/20"></div>
+              <div className="absolute bottom-1/4 left-0 w-full h-px bg-gradient-to-r from-white/20 via-transparent to-white/20"></div>
             </div>
           </div>
 
@@ -366,7 +386,7 @@ export default function CertificatePage() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                       Certificate Hash
                     </p>
-                    <p className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded break-all">
+                    <p className="text-xs font-mono bg-black border border-white/30 p-3 rounded break-all text-gray-200">
                       {certificate.certificate_hash}
                     </p>
                   </div>

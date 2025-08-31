@@ -6,7 +6,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 import {
   Award,
   Shield,
@@ -22,65 +22,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center">
-                <Award className="w-5 h-5 text-white dark:text-black" />
-              </div>
-              <span className="text-xl font-medium text-black dark:text-white">
-                NullSafety
-              </span>
-            </div>
-
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link
-                href="#features"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Features
-              </Link>
-              <Link
-                href="/collectables"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Collectables
-              </Link>
-              <Link
-                href="/dashboard"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/theme-demo"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Demo
-              </Link>
-              <Link
-                href="/debug"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Debug
-              </Link>
-              <Link
-                href="/mint-debug"
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white text-sm"
-              >
-                Mint Debug
-              </Link>
-            </nav>
-
-            <div className="flex items-center space-x-4">
-              <ThemeToggle />
-              <WalletMultiButton />
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="py-24 px-6">
