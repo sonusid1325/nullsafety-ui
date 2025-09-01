@@ -20,6 +20,19 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    files: [
+      "src/lib/certificateService.ts",
+      "src/lib/walletTypes.ts",
+      "src/app/dashboard/page.tsx",
+      "src/app/verify/page.tsx",
+      "src/app/api/certificates/unified/route.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

@@ -3,15 +3,15 @@ import { supabase } from "@/lib/supabase";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
         { error: "Certificate ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,20 +30,20 @@ export async function GET(
       if (certError.code === "PGRST116") {
         return NextResponse.json(
           { error: "Certificate not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
       return NextResponse.json(
         { error: "Database error", details: certError },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!certificate) {
       return NextResponse.json(
         { error: "Certificate not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -71,25 +71,24 @@ export async function GET(
       success: true,
       data: enrichedCertificate,
     });
-
   } catch (error) {
     console.error("API: Unexpected error:", error);
     return NextResponse.json(
       {
         error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { verifier_wallet } = body;
 
@@ -102,9 +101,10 @@ export async function POST(
         {
           certificate_id: id,
           verifier_wallet: verifier_wallet || null,
-          ip_address: request.headers.get("x-forwarded-for") ||
-                     request.headers.get("x-real-ip") ||
-                     "unknown",
+          ip_address:
+            request.headers.get("x-forwarded-for") ||
+            request.headers.get("x-real-ip") ||
+            "unknown",
           user_agent: request.headers.get("user-agent") || "unknown",
         },
       ])
@@ -114,7 +114,7 @@ export async function POST(
       console.error("API: Verification recording error:", error);
       return NextResponse.json(
         { error: "Failed to record verification", details: error },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -123,15 +123,14 @@ export async function POST(
       message: "Verification recorded",
       data,
     });
-
   } catch (error) {
     console.error("API: Verification recording error:", error);
     return NextResponse.json(
       {
         error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

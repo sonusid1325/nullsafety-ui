@@ -23,31 +23,92 @@ import {
   FileText,
   TrendingUp,
   Users,
+  Zap,
+  Database,
+  AlertTriangle,
+  RefreshCw,
+  Settings,
 } from "lucide-react";
 import { supabase, Certificate, Institution } from "@/lib/supabase";
+import {
+  createCertificateService,
+  CertificateData,
+} from "@/lib/certificateService";
+import { AnchorProvider } from "@coral-xyz/anchor";
+import { Connection } from "@solana/web3.js";
+import { createMockWallet } from "@/lib/walletTypes";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CertificateFormData {
   student_name: string;
   roll_no: string;
   course_name: string;
   grade: string;
+  student_wallet: string;
+}
+
+interface CertificateWithBlockchainStatus extends Certificate {
+  blockchainStatus?: boolean;
+  blockchainSignature?: string;
 }
 
 export default function DashboardPage() {
-  const { connected, publicKey } = useWallet();
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const walletContext = useWallet();
+  const { connected, publicKey, wallet } = walletContext;
+  const [certificates, setCertificates] = useState<
+    CertificateWithBlockchainStatus[]
+  >([]);
   const [institution, setInstitution] = useState<Institution | null>(null);
+  const [userType, setUserType] = useState<"university" | "student" | "public">(
+    "public",
+  );
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [blockchainEnabled, setBlockchainEnabled] = useState(true);
+  const [, setBlockchainStatus] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [syncing, setSyncing] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState<CertificateFormData>({
     student_name: "",
     roll_no: "",
     course_name: "",
     grade: "",
+    student_wallet: "",
   });
+
+  const checkUserType = useCallback(async () => {
+    if (!publicKey) {
+      setInstitution(null);
+      setUserType("public");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("institutions")
+        .select("*")
+        .eq("authority_wallet", publicKey.toString())
+        .single();
+
+      if (error || !data) {
+        setInstitution(null);
+        setUserType("student");
+      } else {
+        setInstitution(data);
+        setUserType("university");
+      }
+    } catch (error) {
+      console.error("Error checking user type:", error);
+      setInstitution(null);
+      setUserType("student");
+    }
+  }, [publicKey]);
 
   const fetchInstitutionData = useCallback(async () => {
     if (!publicKey) return;
@@ -70,67 +131,292 @@ export default function DashboardPage() {
     }
   }, [publicKey]);
 
-  const fetchCertificates = useCallback(async () => {
+  const fetchCertificatesFromDatabase = useCallback(async () => {
+    if (!publicKey) return;
+
+    let query = supabase.from("certificates").select("*");
+
+    if (userType === "university") {
+      // Universities see certificates they issued
+      query = query.eq("issued_by", publicKey.toString());
+    } else if (userType === "student") {
+      // Students see certificates issued to them
+      query = query.eq("student_wallet", publicKey.toString());
+    } else {
+      // Public users see no certificates in dashboard
+      setCertificates([]);
+      return;
+    }
+
+    const { data, error } = await query.order("created_at", {
+      ascending: false,
+    });
+
+    if (error) throw error;
+
+    const certificatesWithStatus = (data || []).map((cert) => ({
+      ...cert,
+      blockchainStatus: false, // No blockchain check in fallback mode
+    }));
+
+    setCertificates(certificatesWithStatus);
+  }, [publicKey, userType]);
+
+  const fetchCertificatesWithBlockchainStatus = useCallback(async () => {
     if (!publicKey) return;
 
     try {
-      const { data, error } = await supabase
-        .from("certificates")
-        .select("*")
-        .eq("issued_by", publicKey.toString())
-        .order("created_at", { ascending: false });
+      setLoading(true);
 
-      if (error) throw error;
-      setCertificates(data || []);
+      if (blockchainEnabled) {
+        // Use unified service to get certificates with blockchain status
+        try {
+          const connection = new Connection(
+            process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+              "https://api.devnet.solana.com",
+            "confirmed",
+          );
+
+          // Create a mock wallet for the service (actual signing happens client-side)
+          if (!walletContext) {
+            throw new Error("Wallet not connected");
+          }
+
+          const mockWallet = createMockWallet(walletContext);
+          if (!mockWallet) {
+            throw new Error("Failed to create wallet interface");
+          }
+
+          const provider = new AnchorProvider(connection, mockWallet as never, {
+            commitment: "confirmed",
+          });
+
+          const certificateService = createCertificateService(provider);
+          const result = await certificateService.getCertificates(
+            publicKey.toString(),
+            50, // Get more certificates
+            0,
+          );
+
+          const certificatesWithStatus = result.certificates.map((cert) => ({
+            ...cert,
+            blockchainStatus:
+              result.blockchainStatus[cert.certificate_id] || false,
+          }));
+
+          setCertificates(certificatesWithStatus);
+          setBlockchainStatus(result.blockchainStatus);
+        } catch (blockchainError) {
+          console.warn(
+            "Blockchain fetch failed, using database only:",
+            blockchainError,
+          );
+          setBlockchainEnabled(false);
+          // Fall back to database only
+          await fetchCertificatesFromDatabase();
+        }
+      } else {
+        await fetchCertificatesFromDatabase();
+      }
     } catch (error) {
       console.error("Error fetching certificates:", error);
       toast.error("Failed to fetch certificates");
     } finally {
       setLoading(false);
     }
-  }, [publicKey]);
+  }, [
+    publicKey,
+    blockchainEnabled,
+    walletContext,
+    fetchCertificatesFromDatabase,
+  ]);
 
   useEffect(() => {
     if (connected && publicKey) {
+      checkUserType();
       fetchInstitutionData();
-      fetchCertificates();
     } else {
-      setLoading(false);
+      setInstitution(null);
+      setCertificates([]);
+      setUserType("public");
     }
-  }, [connected, publicKey, fetchInstitutionData, fetchCertificates]);
+  }, [connected, publicKey, checkUserType, fetchInstitutionData]);
+
+  useEffect(() => {
+    if (connected && publicKey && userType !== "public") {
+      fetchCertificatesWithBlockchainStatus();
+    } else {
+      setCertificates([]);
+    }
+  }, [connected, publicKey, userType, fetchCertificatesWithBlockchainStatus]);
 
   const handleCreateCertificate = async () => {
-    if (!publicKey || !institution) return;
+    if (!publicKey || !institution || !wallet) return;
 
     try {
-      const certificateData = {
-        ...formData,
-        certificate_id: `CERT-${Date.now()}`,
-        institution_name: institution.name,
-        issued_by: publicKey.toString(),
-        issued_date: new Date().toISOString().split("T")[0],
-        certificate_hash: `hash-${Date.now()}`, // In production, generate proper hash
-        is_revoked: false,
+      setCreating(true);
+
+      const certificateData: CertificateData = {
+        studentName: formData.student_name,
+        rollNo: formData.roll_no,
+        courseName: formData.course_name,
+        grade: formData.grade,
+        institutionName: institution.name,
+        issuedBy: publicKey.toString(),
+        studentWallet: formData.student_wallet,
       };
 
-      const { error } = await supabase
-        .from("certificates")
-        .insert([certificateData]);
+      if (blockchainEnabled) {
+        // Use unified service for blockchain + database creation
+        const connection = new Connection(
+          process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+            "https://api.devnet.solana.com",
+          "confirmed",
+        );
 
-      if (error) throw error;
+        if (!walletContext) {
+          throw new Error("Wallet not connected");
+        }
 
-      toast.success("Certificate created successfully!");
+        const mockWallet = createMockWallet(walletContext);
+        if (!mockWallet) {
+          throw new Error("Failed to create wallet interface");
+        }
+
+        const provider = new AnchorProvider(connection, mockWallet as never, {
+          commitment: "confirmed",
+        });
+
+        const certificateService = createCertificateService(provider);
+        const result = await certificateService.createCertificate(
+          certificateData,
+          mockWallet,
+        );
+
+        if (result.success) {
+          toast.success(
+            "Certificate created successfully in both blockchain and database!",
+          );
+        } else if (result.partialSuccess?.supabase) {
+          toast.success(
+            "Certificate created in database. Blockchain sync pending.",
+            {
+              duration: 5000,
+              icon: "⚠️",
+            },
+          );
+        } else {
+          throw new Error(result.error || "Certificate creation failed");
+        }
+      } else {
+        // Database-only creation
+        const certificateDbData = {
+          student_name: formData.student_name,
+          roll_no: formData.roll_no,
+          course_name: formData.course_name,
+          grade: formData.grade,
+          certificate_id: `CERT-${Date.now()}`,
+          institution_name: institution.name,
+          issued_by: publicKey.toString(),
+          student_wallet: formData.student_wallet,
+          issued_date: new Date().toISOString().split("T")[0],
+          certificate_hash: `hash-${Date.now()}`,
+          is_revoked: false,
+        };
+
+        const { error } = await supabase
+          .from("certificates")
+          .insert([certificateDbData]);
+
+        if (error) throw error;
+        toast.success("Certificate created in database!");
+      }
+
       setIsCreateModalOpen(false);
       setFormData({
         student_name: "",
         roll_no: "",
         course_name: "",
         grade: "",
+        student_wallet: "",
       });
-      fetchCertificates();
+
+      // Refresh certificates list
+      await fetchCertificatesWithBlockchainStatus();
     } catch (error) {
       console.error("Error creating certificate:", error);
-      toast.error("Failed to create certificate");
+      toast.error(
+        `Failed to create certificate: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleSyncBlockchain = async () => {
+    if (!publicKey || !wallet) return;
+
+    try {
+      setSyncing(true);
+      toast.loading("Syncing certificates to blockchain...", { id: "sync" });
+
+      const connection = new Connection(
+        process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+          "https://api.devnet.solana.com",
+        "confirmed",
+      );
+
+      if (!walletContext) {
+        throw new Error("Wallet not connected");
+      }
+
+      const mockWallet = createMockWallet(walletContext);
+      if (!mockWallet) {
+        throw new Error("Failed to create wallet interface");
+      }
+
+      const provider = new AnchorProvider(connection, mockWallet as never, {
+        commitment: "confirmed",
+      });
+
+      const certificateService = createCertificateService(provider);
+      const result = await certificateService.syncCertificates(mockWallet);
+
+      toast.success(`Synced ${result.synced} certificates to blockchain!`, {
+        id: "sync",
+      });
+
+      if (result.errors.length > 0) {
+        console.warn("Sync errors:", result.errors);
+
+        // Check if the error is related to initialization
+        const hasInitializationError = result.errors.some(
+          (error) =>
+            error.includes("not initialized") || error.includes("Initialize"),
+        );
+
+        if (hasInitializationError) {
+          toast.error(
+            "Blockchain system not initialized. Please visit Admin Setup to initialize the system first.",
+            { duration: 10000 },
+          );
+        } else {
+          toast.error(`${result.errors.length} certificates failed to sync`, {
+            duration: 5000,
+          });
+        }
+      }
+
+      // Refresh certificates to show updated blockchain status
+      await fetchCertificatesWithBlockchainStatus();
+    } catch (error) {
+      console.error("Sync error:", error);
+      toast.error(
+        `Sync failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        { id: "sync" },
+      );
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -144,10 +430,18 @@ export default function DashboardPage() {
                 <Award className="w-8 h-8 text-white dark:text-black" />
               </div>
               <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
-                NullSafety Dashboard
+                {userType === "university"
+                  ? "Institution Dashboard"
+                  : userType === "student"
+                    ? "My Certificates"
+                    : "NullSafety Dashboard"}
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Connect your wallet to access the certificate dashboard
+                {userType === "university"
+                  ? "Manage and issue certificates for your institution"
+                  : userType === "student"
+                    ? "View certificates issued to your wallet"
+                    : "Connect your wallet to access certificate features"}
               </p>
               <WalletMultiButton />
             </div>
@@ -288,109 +582,226 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <Dialog
-              open={isCreateModalOpen}
-              onOpenChange={setIsCreateModalOpen}
-            >
-              <DialogTrigger asChild>
-                <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Certificate
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
-                <DialogHeader>
-                  <DialogTitle className="text-black dark:text-white">
-                    Create New Certificate
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-600 dark:text-gray-400">
-                    Issue a new blockchain certificate for a student.
-                  </DialogDescription>
-                </DialogHeader>
+            <div className="flex items-center space-x-3">
+              {/* Blockchain Status Toggle */}
+              <div className="flex items-center space-x-2">
+                <Badge
+                  variant={blockchainEnabled ? "default" : "secondary"}
+                  className={
+                    blockchainEnabled
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : ""
+                  }
+                >
+                  {blockchainEnabled ? (
+                    <>
+                      <Zap className="w-3 h-3 mr-1" />
+                      Blockchain Active
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-3 h-3 mr-1" />
+                      Database Only
+                    </>
+                  )}
+                </Badge>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-black dark:text-white">
-                      Student Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
-                      value={formData.student_name}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          student_name: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-black dark:text-white">
-                      Roll Number
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
-                      value={formData.roll_no}
-                      onChange={(e) =>
-                        setFormData({ ...formData, roll_no: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-black dark:text-white">
-                      Course Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
-                      value={formData.course_name}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          course_name: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-black dark:text-white">
-                      Grade
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
-                      value={formData.grade}
-                      onChange={(e) =>
-                        setFormData({ ...formData, grade: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <DialogFooter>
+                {blockchainEnabled && (
                   <Button
                     variant="outline"
-                    onClick={() => setIsCreateModalOpen(false)}
+                    size="sm"
+                    onClick={handleSyncBlockchain}
+                    disabled={syncing}
                     className="border-gray-300 dark:border-gray-700"
                   >
-                    Cancel
+                    {syncing ? (
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                    )}
+                    Sync
                   </Button>
-                  <Button
-                    onClick={handleCreateCertificate}
-                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-                    disabled={!formData.student_name || !formData.course_name}
-                  >
-                    Create Certificate
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                )}
+
+                {blockchainEnabled && (
+                  <Link href="/admin-setup">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-300 dark:border-gray-700"
+                    >
+                      <Settings className="w-3 h-3 mr-1" />
+                      Admin Setup
+                    </Button>
+                  </Link>
+                )}
+              </div>
+
+              {/* Create Certificate Modal */}
+              {userType === "university" && (
+                <Dialog
+                  open={isCreateModalOpen}
+                  onOpenChange={setIsCreateModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                      disabled={creating}
+                    >
+                      {creating ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4 mr-2" />
+                      )}
+                      Create Certificate
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
+                    <DialogHeader>
+                      <DialogTitle className="text-black dark:text-white">
+                        Create New Certificate
+                      </DialogTitle>
+                      <DialogDescription className="text-gray-600 dark:text-gray-400">
+                        Issue a new blockchain certificate for a student.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-black dark:text-white">
+                          Student Name
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                          value={formData.student_name}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              student_name: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-black dark:text-white">
+                          Roll Number
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                          value={formData.roll_no}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              roll_no: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-black dark:text-white">
+                          Course Name
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                          value={formData.course_name}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              course_name: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-black dark:text-white">
+                          Grade
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                          value={formData.grade}
+                          onChange={(e) =>
+                            setFormData({ ...formData, grade: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-black dark:text-white">
+                          Student Wallet Address
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter student's wallet address"
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white"
+                          value={formData.student_wallet}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              student_wallet: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsCreateModalOpen(false)}
+                        className="border-gray-300 dark:border-gray-700"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleCreateCertificate}
+                        className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                        disabled={
+                          !formData.student_name ||
+                          !formData.course_name ||
+                          !formData.student_wallet ||
+                          creating
+                        }
+                      >
+                        {creating ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          <>Create Certificate</>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
+
+          {/* Blockchain Status Alert */}
+          {!blockchainEnabled && (
+            <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+              <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <AlertDescription className="text-orange-800 dark:text-orange-200">
+                Blockchain integration is disabled. Certificates will only be
+                stored in the database.
+                <Button
+                  variant="link"
+                  className="p-0 h-auto ml-2 text-orange-800 dark:text-orange-200 underline"
+                  onClick={() => setBlockchainEnabled(true)}
+                >
+                  Enable blockchain
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Certificates List */}
           {certificates.length === 0 ? (
@@ -402,15 +813,21 @@ export default function DashboardPage() {
                     No certificates yet
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    Get started by creating your first certificate
+                    {userType === "university"
+                      ? "Get started by creating your first certificate"
+                      : userType === "student"
+                        ? "No certificates have been issued to your wallet yet"
+                        : "Connect your wallet to view certificates"}
                   </p>
-                  <Button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Certificate
-                  </Button>
+                  {userType === "university" && (
+                    <Button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Issue Certificate
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -436,6 +853,28 @@ export default function DashboardPage() {
                           <XCircle className="h-4 w-4 text-gray-400" />
                         ) : (
                           <CheckCircle className="h-4 w-4 text-black dark:text-white" />
+                        )}
+                        {/* Blockchain Status Indicator */}
+                        {blockchainEnabled && (
+                          <div className="ml-2">
+                            {certificate.blockchainStatus ? (
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-1 py-0 bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300"
+                              >
+                                <Zap className="w-2 h-2 mr-1" />
+                                Chain
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-1 py-0 bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300"
+                              >
+                                <Database className="w-2 h-2 mr-1" />
+                                DB
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

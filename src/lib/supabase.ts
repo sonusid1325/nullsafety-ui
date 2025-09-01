@@ -15,6 +15,7 @@ export interface Certificate {
   certificate_id: string;
   institution_name: string;
   issued_by: string;
+  student_wallet: string;
   issued_date: string;
   certificate_hash: string;
   is_revoked: boolean;

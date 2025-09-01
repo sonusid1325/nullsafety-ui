@@ -35,6 +35,7 @@ CREATE TABLE certificates (
     certificate_id VARCHAR(100) UNIQUE NOT NULL,
     institution_name VARCHAR(255) NOT NULL,
     issued_by VARCHAR(44) NOT NULL, -- Wallet address of the issuer
+    student_wallet VARCHAR(44) NOT NULL, -- Wallet address of the student
     issued_date DATE NOT NULL,
     certificate_hash VARCHAR(128) UNIQUE NOT NULL,
     is_revoked BOOLEAN DEFAULT FALSE,
@@ -71,6 +72,7 @@ CREATE INDEX idx_certificates_roll_no ON certificates(roll_no);
 CREATE INDEX idx_certificates_certificate_id ON certificates(certificate_id);
 CREATE INDEX idx_certificates_institution_name ON certificates(institution_name);
 CREATE INDEX idx_certificates_issued_by ON certificates(issued_by);
+CREATE INDEX idx_certificates_student_wallet ON certificates(student_wallet);
 CREATE INDEX idx_certificates_is_revoked ON certificates(is_revoked);
 
 CREATE INDEX idx_institutions_authority_wallet ON institutions(authority_wallet);
@@ -180,6 +182,9 @@ CREATE POLICY "Certificates can be inserted by authenticated users" ON certifica
 CREATE POLICY "Certificates can be updated by their issuer" ON certificates
     FOR UPDATE USING (issued_by = auth.jwt() ->> 'wallet_address');
 
+CREATE POLICY "Students can view their own certificates" ON certificates
+    FOR SELECT USING (student_wallet = auth.jwt() ->> 'wallet_address');
+
 -- Policies for certificate_verifications table
 CREATE POLICY "Verifications are viewable by everyone" ON certificate_verifications
     FOR SELECT USING (true);
@@ -224,6 +229,7 @@ RETURNS TABLE(
     certificate_id VARCHAR,
     institution_name VARCHAR,
     issued_by VARCHAR,
+    student_wallet VARCHAR,
     issued_date DATE,
     certificate_hash VARCHAR,
     is_revoked BOOLEAN,
@@ -233,7 +239,7 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     SELECT c.id, c.student_name, c.roll_no, c.course_name, c.grade,
-           c.certificate_id, c.institution_name, c.issued_by, c.issued_date,
+           c.certificate_id, c.institution_name, c.issued_by, c.student_wallet, c.issued_date,
            c.certificate_hash, c.is_revoked, c.verification_count, c.created_at
     FROM certificates c
     WHERE c.id = cert_id;

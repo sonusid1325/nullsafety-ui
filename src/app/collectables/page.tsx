@@ -83,9 +83,10 @@ export default function CertificatesPage() {
         // University sees certificates they issued
         query = query.eq("issued_by", publicKey.toString());
       } else if (userType === "student") {
-        // For students, we'll show all certificates for now
-        // In production, you'd filter by student_wallet field
-        query = query.eq("is_revoked", false);
+        // For students, filter by their wallet address
+        query = query
+          .eq("student_wallet", publicKey.toString())
+          .eq("is_revoked", false);
       }
 
       const { data, error } = await query
