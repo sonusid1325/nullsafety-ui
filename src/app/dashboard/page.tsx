@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   RefreshCw,
   Settings,
+  ExternalLink,
 } from "lucide-react";
 import { supabase, Certificate, Institution } from "@/lib/supabase";
 import {
@@ -37,6 +38,7 @@ import {
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { Connection } from "@solana/web3.js";
 import { createMockWallet } from "@/lib/walletTypes";
+// Removed hash generation imports since we'll use transaction signature as hash
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
@@ -50,6 +52,13 @@ interface CertificateFormData {
   grade: string;
   student_wallet: string;
 }
+
+// Utility function to get correct Solscan cluster URL
+const getSolscanUrl = (transactionId: string): string => {
+  const isMainnet = process.env.NEXT_PUBLIC_SOLANA_RPC_URL?.includes("mainnet");
+  const cluster = isMainnet ? "mainnet-beta" : "devnet";
+  return `https://solscan.io/tx/${transactionId}?cluster=${cluster}`;
+};
 
 interface CertificateWithBlockchainStatus extends Certificate {
   blockchainStatus?: boolean;
@@ -295,7 +304,19 @@ export default function DashboardPage() {
 
         if (result.success) {
           toast.success(
-            "Certificate created successfully in both blockchain and database!",
+            `Certificate created! Transaction ID stored as hash. Click Solscan link to verify on blockchain.`,
+            { duration: 10000 },
+          );
+          console.log(
+            "✅ Certificate created with blockchain transaction ID as hash:",
+            {
+              transactionSignature: result.blockchainSignature,
+              certificateHash: result.certificateHash,
+              blockchainAddress: result.blockchainAddress?.toBase58(),
+              solscanUrl: result.blockchainSignature
+                ? getSolscanUrl(result.blockchainSignature)
+                : null,
+            },
           );
         } else if (result.partialSuccess?.supabase) {
           toast.success(
@@ -309,18 +330,24 @@ export default function DashboardPage() {
           throw new Error(result.error || "Certificate creation failed");
         }
       } else {
-        // Database-only creation
+        // Database-only creation - use a placeholder since no blockchain transaction exists
+        const certificateId = `CERT-${Date.now()}`;
+        const issuedDate = new Date().toISOString().split("T")[0];
+
+        // For database-only mode, create a unique identifier that mimics a transaction signature
+        const placeholderHash = `db-${Date.now()}-${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+
         const certificateDbData = {
           student_name: formData.student_name,
           roll_no: formData.roll_no,
           course_name: formData.course_name,
           grade: formData.grade,
-          certificate_id: `CERT-${Date.now()}`,
+          certificate_id: certificateId,
           institution_name: institution.name,
           issued_by: publicKey.toString(),
           student_wallet: formData.student_wallet,
-          issued_date: new Date().toISOString().split("T")[0],
-          certificate_hash: `hash-${Date.now()}`,
+          issued_date: issuedDate,
+          certificate_hash: placeholderHash,
           is_revoked: false,
         };
 
@@ -328,8 +355,27 @@ export default function DashboardPage() {
           .from("certificates")
           .insert([certificateDbData]);
 
-        if (error) throw error;
-        toast.success("Certificate created in database!");
+        if (error) {
+          if (
+            error.code === "23505" &&
+            error.message.includes("certificate_hash")
+          ) {
+            throw new Error(
+              "Certificate ID conflict detected. Please try again.",
+            );
+          }
+          throw error;
+        }
+
+        console.log("✅ Certificate created in database-only mode:", {
+          certificateId,
+          placeholderHash,
+          mode: "database-only",
+        });
+
+        toast.success(
+          `Certificate created in database-only mode. Enable blockchain to get transaction ID as hash.`,
+        );
       }
 
       setIsCreateModalOpen(false);
@@ -887,6 +933,28 @@ export default function DashboardPage() {
                       <p className="text-xs text-gray-600 dark:text-gray-400">
                         Grade: {certificate.grade}
                       </p>
+                      <div className="flex items-center space-x-2">
+                        <p
+                          className="text-xs text-gray-500 dark:text-gray-500 font-mono"
+                          title={`Transaction ID (used as certificate hash): ${certificate.certificate_hash}`}
+                        >
+                          Hash/TX:{" "}
+                          {certificate.certificate_hash?.substring(0, 16)}
+                          ...
+                        </p>
+                        {certificate.certificate_hash &&
+                          !certificate.certificate_hash.startsWith("db-") && (
+                            <a
+                              href={getSolscanUrl(certificate.certificate_hash)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
+                              title="View transaction on Solscan"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-2">

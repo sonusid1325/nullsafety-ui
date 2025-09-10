@@ -220,7 +220,24 @@ export class UnifiedCertificateService {
             metadata,
           );
 
-        if (!enhancedBlockchainResult?.success) {
+        if (
+          enhancedBlockchainResult?.success &&
+          enhancedBlockchainResult.signature
+        ) {
+          // Update the certificate hash in database to be the transaction signature
+          if (supabaseResult) {
+            await supabase
+              .from("certificates")
+              .update({
+                certificate_hash: enhancedBlockchainResult.signature,
+              })
+              .eq("id", supabaseResult.id);
+
+            // Update our local result object
+            supabaseResult.certificate_hash =
+              enhancedBlockchainResult.signature;
+          }
+        } else {
           // Blockchain failed, but Supabase succeeded - mark as partial success
           console.warn(
             "Enhanced blockchain transaction failed:",
@@ -258,7 +275,7 @@ export class UnifiedCertificateService {
         success: true,
         certificate: supabaseResult || undefined,
         blockchainSignature: enhancedBlockchainResult?.signature,
-        certificateHash: enhancedBlockchainResult?.blockchainHash,
+        certificateHash: enhancedBlockchainResult?.signature, // Use transaction signature as hash
         blockchainAddress: enhancedBlockchainResult?.certificateAddress,
         onChainMetadata: enhancedBlockchainResult?.onChainMetadata,
       };
@@ -275,7 +292,7 @@ export class UnifiedCertificateService {
           success: false,
           certificate: supabaseResult,
           blockchainSignature: enhancedBlockchainResult?.signature,
-          certificateHash: enhancedBlockchainResult?.blockchainHash,
+          certificateHash: enhancedBlockchainResult?.signature, // Use transaction signature as hash
           error: errorMessage,
           partialSuccess: {
             supabase: true,
