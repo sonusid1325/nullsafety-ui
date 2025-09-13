@@ -28,14 +28,14 @@ export default function HomePage() {
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-black dark:text-white mb-8 tracking-tight">
-            NullSafety Certificate
+            EduChain Certificate
             <br />
             Verification System
           </h1>
 
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Built by Team NullSafety - Create tamper-proof digital certificates
-            on Solana blockchain. Enable instant verification and build trust in
+            Built by Team EduChain - Create tamper-proof digital certificates on
+            Solana blockchain. Enable instant verification and build trust in
             digital credentials.
           </p>
 
@@ -218,12 +218,12 @@ export default function HomePage() {
                   <Award className="w-4 h-4 text-white dark:text-black" />
                 </div>
                 <span className="font-medium text-black dark:text-white">
-                  NullSafety
+                  EduChain
                 </span>
               </div>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Team NullSafety&apos;s blockchain-powered certificate
-                verification for the digital age.
+                Team EduChain&apos;s blockchain-powered certificate verification
+                for the digital age.
               </p>
             </div>
 
@@ -345,7 +345,7 @@ export default function HomePage() {
 
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mt-8 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              © 2024 Team NullSafety. Built for educational verification on
+              © 2024 Team EduChain. Built for educational verification on
               blockchain.
             </p>
           </div>

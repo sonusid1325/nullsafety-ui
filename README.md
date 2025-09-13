@@ -1,10 +1,10 @@
-# NullSafety - Certificate Verification System
+# EduChain - Certificate Verification System
 
 A blockchain-based certificate issuance and verification platform built on Solana, featuring a minimal Vercel-inspired design system.
 
 ## 🎯 Overview
 
-Team NullSafety has developed a comprehensive certificate verification system that leverages blockchain technology to create tamper-proof digital credentials. The platform features a clean, minimal black and white design inspired by Vercel's aesthetic, ensuring both functionality and visual appeal.
+Team EduChain has developed a comprehensive certificate verification system that leverages blockchain technology to create tamper-proof digital credentials. The platform features a clean, minimal black and white design inspired by Vercel's aesthetic, ensuring both functionality and visual appeal.
 
 ## ✨ Key Features
 
@@ -65,7 +65,7 @@ Team NullSafety has developed a comprehensive certificate verification system th
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd SIH/nullsafety-ui
+   cd SIH/educhain-ui
    ```
 
 2. **Install dependencies**
@@ -259,12 +259,12 @@ npm run lint
 
 This project is built for educational purposes as part of the Smart India Hackathon.
 
-## 👥 Team NullSafety
+## 👥 Team EduChain
 
-Built with ❤️ by Team NullSafety for the Smart India Hackathon 2024.
+Built with ❤️ by Team EduChain for the Smart India Hackathon 2024.
 
 ### Contact
-- **Team**: NullSafety
+- **Team**: EduChain
 - **Project**: Certificate Verification System
 - **Technology**: Solana Blockchain + Next.js
 
@@ -291,7 +291,7 @@ npm run lint
 
 ## 🌐 Live Demo
 
-Experience the NullSafety Certificate Verification System:
+Experience the EduChain Certificate Verification System:
 - **Homepage**: Clean, minimal landing page
 - **Dashboard**: Institution certificate management
 - **Certificate Viewer**: Blockchain-verified credentials

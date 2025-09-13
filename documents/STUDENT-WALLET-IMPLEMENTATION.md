@@ -1,7 +1,7 @@
 # Student Wallet Implementation Guide
 
 ## Overview
-This document outlines the implementation of the `student_wallet` field in the NullSafety certificate system, enabling proper student-specific certificate filtering and access control.
+This document outlines the implementation of the `student_wallet` field in the EduChain certificate system, enabling proper student-specific certificate filtering and access control.
 
 ## Changes Made
 
@@ -96,7 +96,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Running the Migration
 ```bash
 # Navigate to project root
-cd nullsafety-ui
+cd educhain-ui
 
 # Install dependencies if needed
 npm install

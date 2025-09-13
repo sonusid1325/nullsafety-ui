@@ -1,6 +1,6 @@
 /**
  * Database Verification Utilities
- * Helps verify and troubleshoot database setup for NullSafety Certificate System
+ * Helps verify and troubleshoot database setup for EduChain Certificate System
  */
 
 import { supabase } from "./supabase";
@@ -575,7 +575,7 @@ export const generateDiagnosticReport = (
   results: Record<string, DbVerificationResult>,
   formData?: Record<string, unknown>,
 ): string => {
-  let report = "=== NullSafety Database Diagnostic Report ===\n\n";
+  let report = "=== EduChain Database Diagnostic Report ===\n\n";
 
   report += `Connection Test: ${results.connection.success ? "✅ PASS" : "❌ FAIL"}\n`;
   report += `Message: ${results.connection.message}\n\n`;

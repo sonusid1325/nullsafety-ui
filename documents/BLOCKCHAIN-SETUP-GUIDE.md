@@ -20,7 +20,7 @@ The system consists of:
 
 1. **Clone and Install Dependencies**
 ```bash
-cd nullsafety-ui
+cd educhain-ui
 npm install
 ```
 

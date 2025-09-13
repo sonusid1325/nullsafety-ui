@@ -26,7 +26,7 @@ import { Navbar } from "@/components/Navbar";
 
 // Admin wallet addresses that can access this panel
 const ADMIN_WALLETS = [
-  "ADMIN_WALLET_ADDRESS_1", // Replace with actual admin wallet addresses
+  "BYQ7mNMX1UWjaC4yZ9KQFRsNSTyTf84FrkpgcpKorcky", // Replace with actual admin wallet addresses
   "ADMIN_WALLET_ADDRESS_2",
 ];
 

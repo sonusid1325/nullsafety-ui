@@ -1,10 +1,10 @@
-# 🎓 University Registration & Identification Guide - NullSafety
+# 🎓 University Registration & Identification Guide - EduChain
 
-This comprehensive guide explains how universities and educational institutions can identify themselves and get verified in the NullSafety Certificate Verification System.
+This comprehensive guide explains how universities and educational institutions can identify themselves and get verified in the EduChain Certificate Verification System.
 
 ## 🎯 Overview
 
-The NullSafety system uses blockchain-based identity verification for educational institutions. Each university must register with their official wallet address to become a trusted certificate issuer.
+The EduChain system uses blockchain-based identity verification for educational institutions. Each university must register with their official wallet address to become a trusted certificate issuer.
 
 ## 🏛️ University Registration Process
 
@@ -276,7 +276,7 @@ We welcome feedback from institutions:
 
 ---
 
-## 🎉 Welcome to NullSafety!
+## 🎉 Welcome to EduChain!
 
 Once registered and verified, your institution becomes part of the blockchain revolution in educational verification. You'll be issuing tamper-proof, globally verifiable certificates that students can trust and share with confidence.
 
@@ -292,6 +292,6 @@ Welcome to the future of educational credential verification!
 
 ---
 
-**Built with ❤️ by Team NullSafety**
+**Built with ❤️ by Team EduChain**
 
 *Securing education credentials on the blockchain, one certificate at a time.*

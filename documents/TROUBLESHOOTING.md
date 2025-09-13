@@ -1,6 +1,6 @@
-# 🔧 Troubleshooting Guide - NullSafety Registration Issues
+# 🔧 Troubleshooting Guide - EduChain Registration Issues
 
-This guide helps you diagnose and fix common issues with university registration in the NullSafety Certificate Verification System.
+This guide helps you diagnose and fix common issues with university registration in the EduChain Certificate Verification System.
 
 ## 🚨 Common Registration Errors
 
@@ -333,4 +333,4 @@ If none of these solutions work:
 
 ---
 
-**Built by Team NullSafety - We're here to help! 🛠️**
+**Built by Team EduChain - We're here to help! 🛠️**

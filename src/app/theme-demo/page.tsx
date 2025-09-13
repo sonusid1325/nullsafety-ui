@@ -19,7 +19,7 @@ export default function ThemeDemoPage() {
               </div>
               <div>
                 <h1 className="text-xl font-medium text-black dark:text-white">
-                  NullSafety Theme Demo
+                  EduChain Theme Demo
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Pure black and white design system
@@ -287,7 +287,7 @@ export default function ThemeDemoPage() {
                 <Award className="w-4 h-4 text-white dark:text-black" />
               </div>
               <span className="font-medium text-black dark:text-white">
-                NullSafety
+                EduChain
               </span>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">

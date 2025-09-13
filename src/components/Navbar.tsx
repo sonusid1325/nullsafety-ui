@@ -19,12 +19,13 @@ import {
   Building,
   Search,
   LibraryBig,
+  University,
 } from "lucide-react";
 import { supabase, Institution } from "@/lib/supabase";
 
 // Admin wallet addresses that can access admin panel
 const ADMIN_WALLETS = [
-  "ADMIN_WALLET_ADDRESS_1", // Replace with actual admin wallet addresses
+  "BYQ7mNMX1UWjaC4yZ9KQFRsNSTyTf84FrkpgcpKorcky", // Replace with actual admin wallet addresses
   "ADMIN_WALLET_ADDRESS_2",
 ];
 
@@ -156,9 +157,9 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/verify" icon={Shield}>
             Verify Certificate
           </NavLink>
-          <NavLink href="/cert-debug" icon={Search}>
+          {/*<NavLink href="/cert-debug" icon={Search}>
             Debug
-          </NavLink>
+          </NavLink>*/}
           {isAdmin && (
             <NavLink href="/admin" icon={Shield}>
               Admin
@@ -295,9 +296,9 @@ export function Navbar({ className }: NavbarProps) {
           <div className="flex justify-between items-center">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
-              <LibraryBig className="dark:text-white text-black h-10 w-10" />
+              <University className="dark:text-white text-black h-10 w-10" />
               <span className="text-xl font-medium text-black dark:text-white">
-                NullSafety
+                EduChain
               </span>
             </Link>
 

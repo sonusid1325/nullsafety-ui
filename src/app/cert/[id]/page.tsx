@@ -257,7 +257,7 @@ export default function CertificatePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <h1 className="text-xl font-bold text-black dark:text-white">
-                NullSafety
+                EduChain
               </h1>
             </div>
             <div className="flex items-center space-x-4">

@@ -1,6 +1,6 @@
-# 🚀 Quick Start Guide - NullSafety Certificate Verification System
+# 🚀 Quick Start Guide - EduChain Certificate Verification System
 
-Welcome to Team NullSafety's blockchain certificate verification platform! This guide will get you up and running in under 10 minutes.
+Welcome to Team EduChain's blockchain certificate verification platform! This guide will get you up and running in under 10 minutes.
 
 ## 🎯 What You're Building
 
@@ -77,7 +77,7 @@ npx tsc --noEmit    # Check TypeScript errors
 ## 📱 Key Pages Overview
 
 ### 🏠 Homepage (`/`)
-- Hero section with NullSafety branding
+- Hero section with EduChain branding
 - Feature showcase
 - Wallet connection
 - Clean footer with navigation
@@ -186,6 +186,6 @@ src/
 
 ---
 
-**Built with ❤️ by Team NullSafety**
+**Built with ❤️ by Team EduChain**
 
 *Ready to revolutionize certificate verification? Let's build something amazing! 🚀*

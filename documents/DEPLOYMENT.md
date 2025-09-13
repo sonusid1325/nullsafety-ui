@@ -1,6 +1,6 @@
-# 🚀 Deployment Guide - NullSafety Certificate Verification System
+# 🚀 Deployment Guide - EduChain Certificate Verification System
 
-This guide covers deploying the NullSafety Certificate Verification System to production.
+This guide covers deploying the EduChain Certificate Verification System to production.
 
 ## 🎯 Pre-Deployment Checklist
 
@@ -105,7 +105,7 @@ CMD ["npm", "start"]
 ```yaml
 version: '3.8'
 services:
-  nullsafety-ui:
+  educhain-ui:
     build: .
     ports:
       - "3000:3000"
@@ -285,19 +285,19 @@ jobs:
 ```javascript
 // next-seo.config.js
 export default {
-  title: 'NullSafety - Certificate Verification System',
+  title: 'EduChain - Certificate Verification System',
   description: 'Blockchain-based certificate verification on Solana',
   openGraph: {
     type: 'website',
     url: 'https://your-domain.com',
-    title: 'NullSafety Certificate Verification',
+    title: 'EduChain Certificate Verification',
     description: 'Secure, blockchain-verified educational certificates',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'NullSafety Certificate Verification',
+        alt: 'EduChain Certificate Verification',
       },
     ],
   },
@@ -363,6 +363,6 @@ Final steps before announcing:
 
 **🚀 Ready for Production!**
 
-Your NullSafety Certificate Verification System is now ready to secure and verify educational credentials on the blockchain. 
+Your EduChain Certificate Verification System is now ready to secure and verify educational credentials on the blockchain. 
 
-**Team NullSafety** - Building the future of certificate verification! 🛡️
+**Team EduChain** - Building the future of certificate verification! 🛡️

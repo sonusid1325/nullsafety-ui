@@ -124,7 +124,7 @@ export default function DebugPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `nullsafety-diagnostic-${Date.now()}.txt`;
+    a.download = `educhain-diagnostic-${Date.now()}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -186,7 +186,7 @@ export default function DebugPage() {
               </div>
               <div>
                 <h1 className="text-xl font-medium text-black dark:text-white">
-                  NullSafety Debug Console
+                  EduChain Debug Console
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Registration & Database Diagnostics
@@ -575,7 +575,7 @@ export default function DebugPage() {
             </Button>
           </Link>
           <a
-            href="https://github.com/nullsafety/certificate-verification/issues"
+            href="https://github.com/educhain/certificate-verification/issues"
             target="_blank"
             rel="noopener noreferrer"
           >

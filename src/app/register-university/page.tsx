@@ -301,7 +301,7 @@ export default function RegisterUniversityPage() {
                 </div>
                 <div>
                   <h1 className="text-xl font-medium text-black dark:text-white">
-                    NullSafety
+                    EduChain
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     University Registration
@@ -391,7 +391,7 @@ export default function RegisterUniversityPage() {
               </div>
               <div>
                 <h1 className="text-xl font-medium text-black dark:text-white">
-                  NullSafety
+                  EduChain
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   University Registration

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how the NullSafety certificate system creates NFTs that are visible in Phantom wallet as collectables.
+This guide explains how the EduChain certificate system creates NFTs that are visible in Phantom wallet as collectables.
 
 ## The Problem We Solved
 

@@ -1,7 +1,7 @@
 # NFT Removal Summary
 
 ## Overview
-This document summarizes the complete removal of NFT (Non-Fungible Token) minting functionality from the NullSafety Certificate Verification System. The system now focuses purely on certificate verification and management without blockchain asset creation.
+This document summarizes the complete removal of NFT (Non-Fungible Token) minting functionality from the EduChain Certificate Verification System. The system now focuses purely on certificate verification and management without blockchain asset creation.
 
 ## 🗑️ Files Deleted
 

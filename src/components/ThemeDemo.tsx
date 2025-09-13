@@ -240,7 +240,7 @@ export function ThemeDemo() {
       <Card className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
         <CardHeader>
           <CardTitle className="text-black dark:text-white">
-            NullSafety Design System
+            EduChain Design System
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
