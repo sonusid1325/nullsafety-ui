@@ -162,7 +162,7 @@ export default function CertificateDebugPage() {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setTestId(e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
                 <Button

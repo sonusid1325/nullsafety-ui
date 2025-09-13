@@ -37,3 +37,18 @@ export interface Institution {
   created_at: string;
   updated_at: string;
 }
+
+export interface Student {
+  id: string;
+  name: string;
+  roll_no: string;
+  admission_date: string;
+  wallet_address: string;
+  institution_id: string;
+  email?: string;
+  phone?: string;
+  course?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}

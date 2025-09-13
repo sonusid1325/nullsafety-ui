@@ -74,7 +74,7 @@ export default function NavTestPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {!connected && (
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-black border dark:border-gray-600 rounded-lg">
                 <User className="w-5 h-5 text-gray-500" />
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">
@@ -89,13 +89,13 @@ export default function NavTestPage() {
 
             {connected && (
               <>
-                <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <User className="w-5 h-5 text-blue-500" />
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-black border dark:border-gray-600 rounded-lg">
+                  <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   <div>
-                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       Student Account
                     </p>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
                       Should show: Home, My Certificates, Verify Certificate
                     </p>
                   </div>
@@ -191,37 +191,37 @@ export default function NavTestPage() {
           <div className="flex flex-wrap justify-center gap-2">
             <Link
               href="/"
-              className="text-blue-500 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
+              className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
             >
               Home
             </Link>
             <Link
               href="/dashboard"
-              className="text-blue-500 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
+              className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
             >
               Dashboard
             </Link>
             <Link
               href="/collectables"
-              className="text-blue-500 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
+              className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
             >
               Collectables
             </Link>
             <Link
               href="/verify"
-              className="text-blue-500 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
+              className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
             >
               Verify
             </Link>
             <Link
               href="/admin"
-              className="text-blue-500 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
+              className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
             >
               Admin
             </Link>
             <Link
               href="/cert-debug"
-              className="text-blue-500 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
+              className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:underline text-sm px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded"
             >
               Debug
             </Link>

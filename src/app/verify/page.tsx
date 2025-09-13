@@ -202,7 +202,7 @@ export default function UnifiedVerifyPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
                   disabled={loading}
                 />
                 <Button
@@ -261,7 +261,7 @@ export default function UnifiedVerifyPage() {
                       }
                       className={
                         verificationResult.verificationSources.supabase
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                          ? "bg-gray-100 text-gray-800 dark:bg-black dark:text-white border dark:border-gray-600"
                           : ""
                       }
                     >
@@ -472,8 +472,8 @@ export default function UnifiedVerifyPage() {
                 </ul>
               </div>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-3 mt-4">
-              <p className="text-blue-800 dark:text-blue-200 text-sm">
+            <div className="bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-600 rounded p-3 mt-4">
+              <p className="text-gray-800 dark:text-white text-sm">
                 <strong>Best Practice:</strong> A certificate is considered
                 fully verified when it exists in both the database and
                 blockchain with matching information.

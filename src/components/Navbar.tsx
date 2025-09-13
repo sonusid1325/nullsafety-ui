@@ -102,8 +102,8 @@ export function Navbar({ className }: NavbarProps) {
         onClick={onClick || closeMobileMenu}
         className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
           isActive
-            ? "bg-gray-100 dark:bg-gray-800 text-black dark:text-white"
-            : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+            ? "bg-gray-100 dark:bg-black text-black dark:text-white border dark:border-gray-600"
+            : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-black"
         }`}
       >
         {Icon && <Icon className="w-4 h-4" />}
@@ -289,7 +289,7 @@ export function Navbar({ className }: NavbarProps) {
   return (
     <>
       <header
-        className={`border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black ${className}`}
+        className={`border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-black ${className}`}
       >
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
@@ -317,9 +317,9 @@ export function Navbar({ className }: NavbarProps) {
                     </div>
                   )}
                   {isStudent && (
-                    <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-                      <Award className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm text-blue-700 dark:text-blue-300">
+                    <div className="flex items-center space-x-2 px-3 py-1 bg-gray-50 dark:bg-black border dark:border-gray-600 rounded-full">
+                      <Award className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
                         Student
                       </span>
                     </div>
@@ -349,13 +349,13 @@ export function Navbar({ className }: NavbarProps) {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-800">
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <div className="px-6 py-4 space-y-4">
               {renderMobileNavigationLinks()}
 
               {/* Mobile User Status */}
               {connected && (
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
                   {isUniversity && institution && (
                     <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
@@ -365,9 +365,9 @@ export function Navbar({ className }: NavbarProps) {
                     </div>
                   )}
                   {isStudent && (
-                    <div className="flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <Award className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm text-blue-700 dark:text-blue-300">
+                    <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-black border dark:border-gray-600 rounded-lg">
+                      <Award className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
                         Student Account
                       </span>
                     </div>

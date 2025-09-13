@@ -25,6 +25,22 @@ CREATE TABLE institutions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create students table
+CREATE TABLE students (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    roll_no VARCHAR(100) UNIQUE NOT NULL,
+    admission_date DATE NOT NULL,
+    wallet_address VARCHAR(44) NOT NULL,
+    institution_id UUID REFERENCES institutions(id) ON DELETE CASCADE,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    course VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'Active',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create certificates table
 CREATE TABLE certificates (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -79,6 +95,11 @@ CREATE INDEX idx_institutions_authority_wallet ON institutions(authority_wallet)
 CREATE INDEX idx_institutions_is_verified ON institutions(is_verified);
 CREATE INDEX idx_certificate_verifications_certificate_id ON certificate_verifications(certificate_id);
 
+CREATE INDEX idx_students_roll_no ON students(roll_no);
+CREATE INDEX idx_students_wallet_address ON students(wallet_address);
+CREATE INDEX idx_students_institution_id ON students(institution_id);
+CREATE INDEX idx_students_status ON students(status);
+
 -- Create triggers to update updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -94,6 +115,10 @@ CREATE TRIGGER update_institutions_updated_at
 
 CREATE TRIGGER update_certificates_updated_at
     BEFORE UPDATE ON certificates
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_students_updated_at
+    BEFORE UPDATE ON students
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_global_state_updated_at
@@ -161,6 +186,7 @@ ALTER TABLE institutions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificate_verifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE global_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 
 -- Policies for institutions table
 CREATE POLICY "Institutions are viewable by everyone" ON institutions
@@ -184,6 +210,37 @@ CREATE POLICY "Certificates can be updated by their issuer" ON certificates
 
 CREATE POLICY "Students can view their own certificates" ON certificates
     FOR SELECT USING (student_wallet = auth.jwt() ->> 'wallet_address');
+
+-- Policies for students table
+CREATE POLICY "Students are viewable by their institution" ON students
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM institutions
+            WHERE institutions.id = students.institution_id
+            AND institutions.authority_wallet = auth.jwt() ->> 'wallet_address'
+        )
+    );
+
+CREATE POLICY "Students can view their own data" ON students
+    FOR SELECT USING (wallet_address = auth.jwt() ->> 'wallet_address');
+
+CREATE POLICY "Students can be inserted by their institution" ON students
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM institutions
+            WHERE institutions.id = students.institution_id
+            AND institutions.authority_wallet = auth.jwt() ->> 'wallet_address'
+        )
+    );
+
+CREATE POLICY "Students can be updated by their institution" ON students
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM institutions
+            WHERE institutions.id = students.institution_id
+            AND institutions.authority_wallet = auth.jwt() ->> 'wallet_address'
+        )
+    );
 
 -- Policies for certificate_verifications table
 CREATE POLICY "Verifications are viewable by everyone" ON certificate_verifications

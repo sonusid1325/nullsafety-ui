@@ -5,24 +5,24 @@
 @layer base {
     :root {
         --background: 0 0% 100%;
-        --foreground: 222.2 84% 4.9%;
+        --foreground: 0 0% 0%;
         --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
+        --card-foreground: 0 0% 0%;
         --popover: 0 0% 100%;
-        --popover-foreground: 222.2 84% 4.9%;
-        --primary: 221.2 83.2% 53.3%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 210 40% 96%;
-        --secondary-foreground: 222.2 84% 4.9%;
-        --muted: 210 40% 96%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-        --accent: 210 40% 96%;
-        --accent-foreground: 222.2 84% 4.9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 221.2 83.2% 53.3%;
+        --popover-foreground: 0 0% 0%;
+        --primary: 0 0% 0%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 0 0% 96%;
+        --secondary-foreground: 0 0% 0%;
+        --muted: 0 0% 96%;
+        --muted-foreground: 0 0% 45%;
+        --accent: 0 0% 96%;
+        --accent-foreground: 0 0% 0%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 0 0% 90%;
+        --input: 0 0% 90%;
+        --ring: 0 0% 0%;
         --chart-1: 12 76% 61%;
         --chart-2: 173 58% 39%;
         --chart-3: 197 37% 24%;
@@ -32,30 +32,30 @@
     }
 
     .dark {
-        --background: 222.2 84% 4.9%;
-        --foreground: 210 40% 98%;
-        --card: 222.2 84% 4.9%;
-        --card-foreground: 210 40% 98%;
-        --popover: 222.2 84% 4.9%;
-        --popover-foreground: 210 40% 98%;
-        --primary: 217.2 91.2% 59.8%;
-        --primary-foreground: 222.2 84% 4.9%;
-        --secondary: 217.2 32.6% 17.5%;
-        --secondary-foreground: 210 40% 98%;
-        --muted: 217.2 32.6% 17.5%;
-        --muted-foreground: 215 20.2% 65.1%;
-        --accent: 217.2 32.6% 17.5%;
-        --accent-foreground: 210 40% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 217.2 32.6% 17.5%;
-        --input: 217.2 32.6% 17.5%;
-        --ring: 224.3 76.3% 94.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
+        --background: 0 0% 0%;
+        --foreground: 0 0% 100%;
+        --card: 0 0% 0%;
+        --card-foreground: 0 0% 100%;
+        --popover: 0 0% 0%;
+        --popover-foreground: 0 0% 100%;
+        --primary: 0 0% 100%;
+        --primary-foreground: 0 0% 0%;
+        --secondary: 0 0% 5%;
+        --secondary-foreground: 0 0% 100%;
+        --muted: 0 0% 5%;
+        --muted-foreground: 0 0% 70%;
+        --accent: 0 0% 5%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 70% 50%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 0 0% 10%;
+        --input: 0 0% 5%;
+        --ring: 0 0% 100%;
+        --chart-1: 0 0% 70%;
+        --chart-2: 0 0% 60%;
+        --chart-3: 0 0% 50%;
+        --chart-4: 0 0% 40%;
+        --chart-5: 0 0% 30%;
     }
 }
 
@@ -133,16 +133,16 @@
 }
 
 .certificate-card:hover {
-    @apply border-primary/20;
+    @apply border-gray-300 dark:border-gray-700;
 }
 
 /* Button variants */
 .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium transition-colors;
+    @apply bg-primary text-primary-foreground hover:bg-gray-800 dark:hover:bg-gray-100 px-4 py-2 rounded-md font-medium transition-colors;
 }
 
 .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md font-medium transition-colors;
+    @apply bg-secondary text-secondary-foreground hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 rounded-md font-medium transition-colors;
 }
 
 .btn-outline {
@@ -151,20 +151,20 @@
 
 /* Loading spinner */
 .loading-spinner {
-    @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary;
+    @apply animate-spin rounded-full border-2 border-gray-300 border-t-black dark:border-gray-700 dark:border-t-white;
 }
 
 /* Toast notifications */
 .toast-success {
-    @apply bg-green-500 text-white;
+    @apply bg-green-600 text-white;
 }
 
 .toast-error {
-    @apply bg-red-500 text-white;
+    @apply bg-red-600 text-white;
 }
 
 .toast-warning {
-    @apply bg-yellow-500 text-black;
+    @apply bg-yellow-600 text-white;
 }
 
 /* Debug page styles */
@@ -195,7 +195,7 @@
 
 /* Phantom wallet specific styles */
 .phantom-gradient {
-    background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%);
 }
 
 .devnet-warning {
@@ -204,11 +204,11 @@
 
 /* NFT minting styles */
 .nft-preview {
-    @apply bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-lg p-8 text-center;
+    @apply bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center;
 }
 
 .minting-animation {
-    @apply animate-pulse bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent;
+    @apply animate-pulse bg-gradient-to-r from-gray-500 via-gray-400 to-gray-300 bg-clip-text text-transparent;
 }
 
 /* Certificate verification styles */
@@ -269,11 +269,11 @@
 }
 
 .transaction-link {
-    @apply text-primary hover:text-primary/80 underline transition-colors;
+    @apply text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 underline transition-colors;
 }
 
 .solscan-link {
-    @apply inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300;
+    @apply inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200;
 }
 
 /* Success/error state animations */
@@ -283,4 +283,78 @@
 
 .error-x {
     @apply text-red-500 animate-pulse;
+}
+
+/* Override any remaining blue/colored elements */
+.text-blue-500,
+.text-blue-600,
+.text-blue-400 {
+    @apply text-gray-600 dark:text-gray-400;
+}
+
+.text-blue-700,
+.text-blue-800 {
+    @apply text-gray-800 dark:text-gray-200;
+}
+
+.text-blue-300 {
+    @apply text-gray-300 dark:text-gray-600;
+}
+
+.hover\:text-blue-700:hover,
+.hover\:text-blue-800:hover {
+    @apply text-gray-800 dark:text-gray-200;
+}
+
+.hover\:text-blue-300:hover {
+    @apply text-gray-300 dark:text-gray-600;
+}
+
+.bg-blue-50 {
+    @apply bg-gray-50 dark:bg-gray-900;
+}
+
+.bg-blue-100 {
+    @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.border-blue-200 {
+    @apply border-gray-200 dark:border-gray-700;
+}
+
+.bg-green-50 {
+    background-color: rgb(240 253 244);
+}
+
+.dark .bg-green-50 {
+    background-color: rgba(34 197 94 / 0.08);
+}
+
+.bg-green-100 {
+    background-color: rgb(220 252 231);
+}
+
+.dark .bg-green-100 {
+    background-color: rgba(34 197 94 / 0.12);
+}
+
+.border-green-200 {
+    border-color: rgb(187 247 208);
+}
+
+.dark .border-green-200 {
+    border-color: rgba(34 197 94 / 0.2);
+}
+
+/* Tab component overrides */
+.data-\[state\=active\]\:bg-background[data-state="active"] {
+    @apply bg-background text-foreground;
+}
+
+.data-\[state\=active\]\:text-foreground[data-state="active"] {
+    @apply text-foreground;
+}
+
+.data-\[state\=active\]\:shadow-sm[data-state="active"] {
+    @apply shadow-sm;
 }

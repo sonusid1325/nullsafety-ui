@@ -320,15 +320,15 @@ export default function CertificatesPage() {
                 </Card>
               )}
               {userType === "student" && (
-                <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+                <Card className="border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-black">
                   <CardContent className="pt-4">
                     <div className="flex items-center space-x-3">
-                      <User className="w-6 h-6 text-blue-600" />
+                      <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                       <div>
-                        <h3 className="font-semibold text-blue-800 dark:text-blue-200">
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-200">
                           Student Account
                         </h3>
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
                           Browse and verify certificates. Connect with your
                           student wallet to view certificates issued to you.
                         </p>
