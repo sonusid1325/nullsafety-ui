@@ -132,9 +132,9 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/collectables" icon={Award}>
             Gallery
           </NavLink>
-          <NavLink href="/verify" icon={Shield}>
-            Verify Certificate
-          </NavLink>
+#          <NavLink href="/verify" icon={Shield}>
+ #           Verify Certificate
+  #        </NavLink>
           <NavLink href="/register-university" icon={Building}>
             Register University
           </NavLink>
