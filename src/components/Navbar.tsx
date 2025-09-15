@@ -18,7 +18,6 @@ import {
   UserCheck,
   Building,
   Search,
-  LibraryBig,
   University,
 } from "lucide-react";
 import { supabase, Institution } from "@/lib/supabase";

@@ -3,6 +3,8 @@ import {
   Connection,
   PublicKey,
   SystemProgram,
+  Transaction,
+  VersionedTransaction,
   Keypair,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
@@ -54,13 +56,23 @@ export class PrivateKeyTransactionManager {
       this.connection,
       {
         publicKey: this.keypair.publicKey,
-        signTransaction: async (tx: any) => {
-          tx.sign(this.keypair);
+        signTransaction: async <T extends Transaction | VersionedTransaction>(
+          tx: T,
+        ): Promise<T> => {
+          if (tx instanceof Transaction) {
+            tx.sign(this.keypair);
+          }
           return tx;
         },
-        signAllTransactions: async (txs: any[]) => {
-          return txs.map((tx: any) => {
-            tx.sign(this.keypair);
+        signAllTransactions: async <
+          T extends Transaction | VersionedTransaction,
+        >(
+          txs: T[],
+        ): Promise<T[]> => {
+          return txs.map((tx: T) => {
+            if (tx instanceof Transaction) {
+              (tx as Transaction).sign(this.keypair);
+            }
             return tx;
           });
         },

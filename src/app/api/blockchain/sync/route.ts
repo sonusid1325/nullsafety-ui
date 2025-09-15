@@ -5,15 +5,15 @@ import { supabase } from "@/lib/supabase";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const issuedBy = searchParams.get('issuedBy');
+    const issuedBy = searchParams.get("issuedBy");
 
     if (!issuedBy) {
       return NextResponse.json(
         {
           success: false,
-          error: "issuedBy parameter is required"
+          error: "issuedBy parameter is required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,9 +28,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Unauthorized: Can only sync certificates for the configured private key"
+          error:
+            "Unauthorized: Can only sync certificates for the configured private key",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -38,32 +39,36 @@ export async function GET(request: NextRequest) {
     console.log("⛓️  Fetching certificates from blockchain...");
     const blockchainCertificates = await txManager.getAllCertificates();
 
-    console.log(`📊 Found ${blockchainCertificates.length} certificates on blockchain`);
+    console.log(
+      `📊 Found ${blockchainCertificates.length} certificates on blockchain`,
+    );
 
     // Get all certificates from database for this issuer
     console.log("💾 Fetching certificates from database...");
     const { data: dbCertificates, error: dbError } = await supabase
-      .from('certificates')
-      .select('*')
-      .eq('issued_by', issuedBy);
+      .from("certificates")
+      .select("*")
+      .eq("issued_by", issuedBy);
 
     if (dbError) {
       throw new Error(`Database query failed: ${dbError.message}`);
     }
 
-    console.log(`📊 Found ${dbCertificates?.length || 0} certificates in database`);
+    console.log(
+      `📊 Found ${dbCertificates?.length || 0} certificates in database`,
+    );
 
     // Create sync status map
     const syncStatus: { [key: string]: boolean } = {};
     const blockchainMap = new Map();
 
     // Build blockchain certificate map
-    blockchainCertificates.forEach(cert => {
+    blockchainCertificates.forEach((cert) => {
       blockchainMap.set(cert.data.certificateId, cert);
     });
 
     // Check sync status for each database certificate
-    const syncResults = (dbCertificates || []).map(dbCert => {
+    const syncResults = (dbCertificates || []).map((dbCert) => {
       const isOnBlockchain = blockchainMap.has(dbCert.certificate_id);
       syncStatus[dbCert.certificate_id] = isOnBlockchain;
 
@@ -78,20 +83,25 @@ export async function GET(request: NextRequest) {
           ? blockchainMap.get(dbCert.certificate_id).address.toString()
           : null,
         certificateHash: dbCert.certificate_hash,
-        createdAt: dbCert.created_at
+        createdAt: dbCert.created_at,
       };
     });
 
     // Find certificates that exist on blockchain but not in database
     const blockchainOnlyIds = blockchainCertificates
-      .filter(bcCert => !dbCertificates?.some(dbCert => dbCert.certificate_id === bcCert.data.certificateId))
-      .map(bcCert => bcCert.data.certificateId);
+      .filter(
+        (bcCert) =>
+          !dbCertificates?.some(
+            (dbCert) => dbCert.certificate_id === bcCert.data.certificateId,
+          ),
+      )
+      .map((bcCert) => bcCert.data.certificateId);
 
     // Statistics
     const totalDatabase = dbCertificates?.length || 0;
     const totalBlockchain = blockchainCertificates.length;
-    const synced = syncResults.filter(r => r.isOnBlockchain).length;
-    const databaseOnly = syncResults.filter(r => !r.isOnBlockchain).length;
+    const synced = syncResults.filter((r) => r.isOnBlockchain).length;
+    const databaseOnly = syncResults.filter((r) => !r.isOnBlockchain).length;
     const blockchainOnly = blockchainOnlyIds.length;
 
     console.log("📊 Sync Statistics:");
@@ -110,17 +120,17 @@ export async function GET(request: NextRequest) {
           synced,
           databaseOnly,
           blockchainOnly,
-          syncPercentage: totalDatabase > 0 ? Math.round((synced / totalDatabase) * 100) : 0
+          syncPercentage:
+            totalDatabase > 0 ? Math.round((synced / totalDatabase) * 100) : 0,
         },
         certificates: syncResults,
         blockchainOnlyCertificates: blockchainOnlyIds,
         syncStatus,
         issuerPublicKey: ourPublicKey,
-        lastSyncAt: new Date().toISOString()
+        lastSyncAt: new Date().toISOString(),
       },
-      message: `Sync completed: ${synced}/${totalDatabase} certificates are synced with blockchain`
+      message: `Sync completed: ${synced}/${totalDatabase} certificates are synced with blockchain`,
     });
-
   } catch (error) {
     console.error("❌ Blockchain sync error:", error);
 
@@ -130,19 +140,24 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: "Private key not configured. Please add SOLANA_PRIVATE_KEY to your environment variables."
+            error:
+              "Private key not configured. Please add SOLANA_PRIVATE_KEY to your environment variables.",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
-      if (error.message.includes("network") || error.message.includes("connection")) {
+      if (
+        error.message.includes("network") ||
+        error.message.includes("connection")
+      ) {
         return NextResponse.json(
           {
             success: false,
-            error: "Network error: Unable to connect to Solana devnet. Check your internet connection."
+            error:
+              "Network error: Unable to connect to Solana devnet. Check your internet connection.",
           },
-          { status: 503 }
+          { status: 503 },
         );
       }
     }
@@ -150,9 +165,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Internal server error"
+        error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -167,13 +182,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "certificateIds array and issuedBy are required"
+          error: "certificateIds array and issuedBy are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log(`🔄 Force syncing ${certificateIds.length} specific certificates...`);
+    console.log(
+      `🔄 Force syncing ${certificateIds.length} specific certificates...`,
+    );
 
     const txManager = createPrivateKeyTransactionManager();
 
@@ -182,13 +199,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Unauthorized: Can only sync certificates for the configured private key"
+          error:
+            "Unauthorized: Can only sync certificates for the configured private key",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    const results: any[] = [];
+    const results: Array<{
+      certificateId: string;
+      found: boolean;
+      address?: string | null;
+      data?: unknown | null;
+      error?: string;
+    }> = [];
 
     for (const certId of certificateIds) {
       try {
@@ -197,18 +221,18 @@ export async function POST(request: NextRequest) {
           certificateId: certId,
           found: !!blockchainCert,
           address: blockchainCert?.address.toString() || null,
-          data: blockchainCert?.data || null
+          data: blockchainCert?.data || null,
         });
       } catch (error) {
         results.push({
           certificateId: certId,
           found: false,
-          error: error instanceof Error ? error.message : "Unknown error"
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
 
-    const found = results.filter(r => r.found).length;
+    const found = results.filter((r) => r.found).length;
 
     return NextResponse.json({
       success: true,
@@ -216,19 +240,18 @@ export async function POST(request: NextRequest) {
         total: certificateIds.length,
         found: found,
         missing: certificateIds.length - found,
-        results: results
+        results: results,
       },
-      message: `Force sync completed: ${found}/${certificateIds.length} certificates found on blockchain`
+      message: `Force sync completed: ${found}/${certificateIds.length} certificates found on blockchain`,
     });
-
   } catch (error) {
     console.error("❌ Force sync error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Internal server error"
+        error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
