@@ -31,14 +31,11 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { supabase, Certificate, Institution } from "@/lib/supabase";
-import {
-  createCertificateService,
-  CertificateData,
-} from "@/lib/certificateService";
+import { createCertificateService } from "@/lib/certificateService";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { Connection } from "@solana/web3.js";
 import { createMockWallet } from "@/lib/walletTypes";
-// Removed hash generation imports since we'll use transaction signature as hash
+// Private key transactions are handled server-side via API
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
@@ -63,6 +60,12 @@ const getSolscanUrl = (transactionId: string): string => {
 interface CertificateWithBlockchainStatus extends Certificate {
   blockchainStatus?: boolean;
   blockchainSignature?: string;
+}
+
+interface PrivateKeyStatus {
+  isAvailable: boolean;
+  message: string;
+  publicKey?: string;
 }
 
 export default function DashboardPage() {
@@ -94,6 +97,10 @@ export default function DashboardPage() {
     wallet_address: string;
   } | null>(null);
   const [fetchingStudent, setFetchingStudent] = useState(false);
+  const [privateKeyStatus, setPrivateKeyStatus] = useState<PrivateKeyStatus>({
+    isAvailable: false,
+    message: "Checking private key status...",
+  });
 
   const checkUserType = useCallback(async () => {
     if (!publicKey) {
@@ -263,6 +270,25 @@ export default function DashboardPage() {
     }
   }, [connected, publicKey, userType, fetchCertificatesWithBlockchainStatus]);
 
+  // Fetch private key status
+  useEffect(() => {
+    const fetchPrivateKeyStatus = async () => {
+      try {
+        const response = await fetch("/api/private-key-status");
+        const data = await response.json();
+        setPrivateKeyStatus(data);
+      } catch (error) {
+        console.error("Error checking private key status:", error);
+        setPrivateKeyStatus({
+          isAvailable: false,
+          message: "Error checking private key status",
+        });
+      }
+    };
+
+    fetchPrivateKeyStatus();
+  }, []);
+
   const fetchStudentByRollNo = useCallback(async () => {
     if (!formData.roll_no || !institution?.id) return;
 
@@ -303,7 +329,7 @@ export default function DashboardPage() {
   }, [formData.roll_no, institution?.id, fetchStudentByRollNo]);
 
   const handleCreateCertificate = async () => {
-    if (!publicKey || !institution || !wallet) return;
+    if (!publicKey || !institution) return;
 
     try {
       setCreating(true);
@@ -322,62 +348,65 @@ export default function DashboardPage() {
         return;
       }
 
-      const certificateData: CertificateData = {
-        studentName: studentData.name,
-        rollNo: formData.roll_no,
-        courseName: formData.course_name,
-        grade: formData.grade,
-        institutionName: institution.name,
-        issuedBy: publicKey.toString(),
-        studentWallet: studentData.wallet_address,
-      };
-
       if (blockchainEnabled) {
-        // Use unified service for blockchain + database creation
-        const connection = new Connection(
-          process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
-            "https://api.devnet.solana.com",
-          "confirmed",
-        );
+        // Use API endpoint for blockchain + database creation
+        try {
+          // Check if private key is available
+          if (!privateKeyStatus.isAvailable) {
+            throw new Error(privateKeyStatus.message);
+          }
 
-        if (!walletContext) {
-          throw new Error("Wallet not connected");
-        }
-
-        const mockWallet = createMockWallet(walletContext);
-        if (!mockWallet) {
-          throw new Error("Failed to create wallet interface");
-        }
-
-        const provider = new AnchorProvider(connection, mockWallet as never, {
-          commitment: "confirmed",
-        });
-
-        const certificateService = createCertificateService(provider);
-        const result = await certificateService.createCertificate(
-          certificateData,
-          mockWallet,
-        );
-
-        if (result.success) {
-          toast.success("Certificate created successfully!");
-        } else {
-          toast.error(
-            result.error || "Failed to create certificate on blockchain",
+          // Call API endpoint for certificate creation
+          const response = await fetch(
+            "/api/certificates/create-with-private-key",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                studentName: studentData.name,
+                rollNo: formData.roll_no,
+                courseName: formData.course_name,
+                grade: formData.grade,
+                institutionName: institution.name,
+                issuedBy: publicKey.toString(),
+                studentWallet: studentData.wallet_address,
+              }),
+            },
           );
+
+          const result = await response.json();
+
+          if (result.success) {
+            toast.success("Certificate created successfully on blockchain!");
+            console.log("✅ Certificate issued:", result.data.transactionUrl);
+          } else {
+            throw new Error(result.error || "Failed to create certificate");
+          }
+        } catch (blockchainError) {
+          console.error("Certificate creation failed:", blockchainError);
+          toast.error(
+            blockchainError instanceof Error
+              ? blockchainError.message
+              : "Failed to create certificate. Check server logs for details.",
+          );
+          return;
         }
       } else {
         // Database-only creation
         try {
+          const certificateId = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
           const { error } = await supabase.from("certificates").insert({
-            student_name: certificateData.studentName,
-            roll_no: certificateData.rollNo,
-            course_name: certificateData.courseName,
-            grade: certificateData.grade,
-            certificate_id: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            institution_name: certificateData.institutionName,
-            issued_by: certificateData.issuedBy,
-            student_wallet: certificateData.studentWallet,
+            student_name: studentData.name,
+            roll_no: formData.roll_no,
+            course_name: formData.course_name,
+            grade: formData.grade,
+            certificate_id: certificateId,
+            institution_name: institution.name,
+            issued_by: publicKey.toString(),
+            student_wallet: studentData.wallet_address,
             issued_date: new Date().toISOString().split("T")[0],
             certificate_hash: `db-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           });
@@ -411,19 +440,60 @@ export default function DashboardPage() {
   };
 
   const handleSyncBlockchain = async () => {
-    if (!publicKey || !wallet) return;
+    if (!publicKey) return;
 
     try {
       setSyncing(true);
       toast.loading("Syncing with blockchain...", { id: "sync" });
 
+      // Check if private key is available
+      if (!privateKeyStatus.isAvailable) {
+        throw new Error(privateKeyStatus.message);
+      }
+
+      console.log("Syncing with blockchain via API...");
+
+      // Call sync API endpoint
+      const response = await fetch(
+        `/api/blockchain/sync?issuedBy=${publicKey.toString()}`,
+      );
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Sync failed");
+      }
+
+      console.log("📊 Sync results:", result.data.statistics);
+
+      // Update certificates with blockchain status
+      const updatedCertificates = certificates.map((cert) => {
+        const isOnBlockchain =
+          result.data.syncStatus[cert.certificate_id] || false;
+        return {
+          ...cert,
+          blockchainStatus: isOnBlockchain,
+        };
+      });
+
+      setCertificates(updatedCertificates);
+
+      // Show detailed sync results
+      const stats = result.data.statistics;
+      toast.success(
+        `Blockchain sync completed! ${stats.synced}/${stats.totalDatabase} certificates synced (${stats.syncPercentage}%)`,
+        { id: "sync" },
+      );
+
       // Refresh certificates with blockchain status
       await fetchCertificatesWithBlockchainStatus();
-
-      toast.success("Blockchain sync completed!", { id: "sync" });
     } catch (error) {
       console.error("Error syncing blockchain:", error);
-      toast.error("Failed to sync with blockchain", { id: "sync" });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to sync with blockchain",
+        { id: "sync" },
+      );
     } finally {
       setSyncing(false);
     }
@@ -757,6 +827,58 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Private Key Success Status */}
+              {blockchainEnabled && privateKeyStatus.isAvailable && (
+                <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <AlertDescription className="text-green-800 dark:text-green-200">
+                    <div className="space-y-2">
+                      <p>
+                        <strong>Private Key Configured:</strong>{" "}
+                        {privateKeyStatus.message}
+                      </p>
+                      {privateKeyStatus.publicKey && (
+                        <p className="text-xs font-mono">
+                          Public Key: {privateKeyStatus.publicKey}
+                        </p>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Private Key Configuration Alert */}
+              {blockchainEnabled && !privateKeyStatus.isAvailable && (
+                <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <AlertDescription className="text-red-800 dark:text-red-200">
+                    <div className="space-y-2">
+                      <p>
+                        <strong>Private Key Configuration:</strong>{" "}
+                        {privateKeyStatus.message}
+                      </p>
+                      {!privateKeyStatus.isAvailable && (
+                        <>
+                          <p>Add your Solana private key to .env.local file:</p>
+                          <code className="block bg-red-100 dark:bg-red-900 p-2 rounded text-xs">
+                            SOLANA_PRIVATE_KEY=3sNrx9GXSEt9n9RGQDPkNhuQsAWAQAssAkiH8QKcyFh7jwpvGJLizYMstbpq5FqFifAeZKt7h31KeSkWDJamtTfF
+                          </code>
+                          <p className="text-xs">
+                            Restart the development server after adding the
+                            environment variable.
+                          </p>
+                        </>
+                      )}
+                      {privateKeyStatus.publicKey && (
+                        <p className="text-xs font-mono">
+                          Public Key: {privateKeyStatus.publicKey}
+                        </p>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Blockchain Status Alert */}
               {!blockchainEnabled && (
                 <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
@@ -929,6 +1051,58 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
+
+            {/* Private Key Success Status */}
+            {blockchainEnabled && privateKeyStatus.isAvailable && (
+              <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <AlertDescription className="text-green-800 dark:text-green-200">
+                  <div className="space-y-2">
+                    <p>
+                      <strong>Private Key Configured:</strong>{" "}
+                      {privateKeyStatus.message}
+                    </p>
+                    {privateKeyStatus.publicKey && (
+                      <p className="text-xs font-mono">
+                        Public Key: {privateKeyStatus.publicKey}
+                      </p>
+                    )}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Private Key Configuration Alert */}
+            {blockchainEnabled && !privateKeyStatus.isAvailable && (
+              <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <AlertDescription className="text-red-800 dark:text-red-200">
+                  <div className="space-y-2">
+                    <p>
+                      <strong>Private Key Configuration:</strong>{" "}
+                      {privateKeyStatus.message}
+                    </p>
+                    {!privateKeyStatus.isAvailable && (
+                      <>
+                        <p>Add your Solana private key to .env.local file:</p>
+                        <code className="block bg-red-100 dark:bg-red-900 p-2 rounded text-xs">
+                          SOLANA_PRIVATE_KEY=3sNrx9GXSEt9n9RGQDPkNhuQsAWAQAssAkiH8QKcyFh7jwpvGJLizYMstbpq5FqFifAeZKt7h31KeSkWDJamtTfF
+                        </code>
+                        <p className="text-xs">
+                          Restart the development server after adding the
+                          environment variable.
+                        </p>
+                      </>
+                    )}
+                    {privateKeyStatus.publicKey && (
+                      <p className="text-xs font-mono">
+                        Public Key: {privateKeyStatus.publicKey}
+                      </p>
+                    )}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Blockchain Status Alert */}
             {!blockchainEnabled && (

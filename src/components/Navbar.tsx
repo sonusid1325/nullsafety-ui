@@ -132,9 +132,6 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/collectables" icon={Award}>
             Gallery
           </NavLink>
-#          <NavLink href="/verify" icon={Shield}>
- #           Verify Certificate
-  #        </NavLink>
           <NavLink href="/register-university" icon={Building}>
             Register University
           </NavLink>
@@ -154,12 +151,6 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/collectables" icon={FileCheck}>
             Certificates
           </NavLink>
-          <NavLink href="/verify" icon={Shield}>
-            Verify Certificate
-          </NavLink>
-          {/*<NavLink href="/cert-debug" icon={Search}>
-            Debug
-          </NavLink>*/}
           {isAdmin && (
             <NavLink href="/admin" icon={Shield}>
               Admin
@@ -178,8 +169,8 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/collectables" icon={Award}>
             My Certificates
           </NavLink>
-          <NavLink href="/verify" icon={Shield}>
-            Verify Certificate
+          <NavLink href="/register-university" icon={Building}>
+            Register University
           </NavLink>
         </nav>
       );
@@ -189,9 +180,6 @@ export function Navbar({ className }: NavbarProps) {
       <nav className="hidden md:flex items-center space-x-1">
         <NavLink href="/" icon={Home}>
           Home
-        </NavLink>
-        <NavLink href="/verify" icon={Shield}>
-          Verify Certificate
         </NavLink>
         <NavLink href="/register-university" icon={Building}>
           Register University
@@ -219,9 +207,6 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/collectables" icon={Award}>
             Gallery
           </NavLink>
-          <NavLink href="/verify" icon={Shield}>
-            Verify Certificate
-          </NavLink>
           <NavLink href="/register-university" icon={Building}>
             Register University
           </NavLink>
@@ -240,9 +225,6 @@ export function Navbar({ className }: NavbarProps) {
           </NavLink>
           <NavLink href="/collectables" icon={FileCheck}>
             Certificates
-          </NavLink>
-          <NavLink href="/verify" icon={Shield}>
-            Verify Certificate
           </NavLink>
           <NavLink href="/cert-debug" icon={Search}>
             Debug
@@ -265,9 +247,6 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/collectables" icon={Award}>
             My Certificates
           </NavLink>
-          <NavLink href="/verify" icon={Shield}>
-            Verify Certificate
-          </NavLink>
         </nav>
       );
     }
@@ -276,9 +255,6 @@ export function Navbar({ className }: NavbarProps) {
       <nav className="space-y-1">
         <NavLink href="/" icon={Home}>
           Home
-        </NavLink>
-        <NavLink href="/verify" icon={Shield}>
-          Verify Certificate
         </NavLink>
         <NavLink href="/register-university" icon={Building}>
           Register University
