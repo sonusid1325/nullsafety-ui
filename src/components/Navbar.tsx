@@ -19,6 +19,7 @@ import {
   Building,
   Search,
   University,
+  FileCheck2,
 } from "lucide-react";
 import { supabase, Institution } from "@/lib/supabase";
 
@@ -128,6 +129,14 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/" icon={Home}>
             Home
           </NavLink>
+          <NavLink href="/verify" icon={FileCheck2}>
+            Verify
+          </NavLink>
+          {process.env.NODE_ENV === "development" && (
+            <NavLink href="/verify-debug" icon={Search}>
+              Debug
+            </NavLink>
+          )}
           <NavLink href="/collectables" icon={Award}>
             Gallery
           </NavLink>
@@ -144,6 +153,14 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/" icon={Home}>
             Home
           </NavLink>
+          <NavLink href="/verify" icon={FileCheck2}>
+            Verify
+          </NavLink>
+          {process.env.NODE_ENV === "development" && (
+            <NavLink href="/verify-debug" icon={Search}>
+              Debug
+            </NavLink>
+          )}
           <NavLink href="/dashboard" icon={LayoutDashboard}>
             Dashboard
           </NavLink>
@@ -165,6 +182,14 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/" icon={Home}>
             Home
           </NavLink>
+          <NavLink href="/verify" icon={FileCheck2}>
+            Verify
+          </NavLink>
+          {process.env.NODE_ENV === "development" && (
+            <NavLink href="/verify-debug" icon={Search}>
+              Debug
+            </NavLink>
+          )}
           <NavLink href="/collectables" icon={Award}>
             My Certificates
           </NavLink>
@@ -180,6 +205,14 @@ export function Navbar({ className }: NavbarProps) {
         <NavLink href="/" icon={Home}>
           Home
         </NavLink>
+        <NavLink href="/verify" icon={FileCheck2}>
+          Verify
+        </NavLink>
+        {process.env.NODE_ENV === "development" && (
+          <NavLink href="/verify-debug" icon={Search}>
+            Debug
+          </NavLink>
+        )}
         <NavLink href="/register-university" icon={Building}>
           Register University
         </NavLink>
@@ -203,6 +236,14 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/" icon={Home}>
             Home
           </NavLink>
+          <NavLink href="/verify" icon={FileCheck2}>
+            Verify
+          </NavLink>
+          {process.env.NODE_ENV === "development" && (
+            <NavLink href="/verify-debug" icon={Search}>
+              Debug
+            </NavLink>
+          )}
           <NavLink href="/collectables" icon={Award}>
             Gallery
           </NavLink>
@@ -219,6 +260,14 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/" icon={Home}>
             Home
           </NavLink>
+          <NavLink href="/verify" icon={FileCheck2}>
+            Verify
+          </NavLink>
+          {process.env.NODE_ENV === "development" && (
+            <NavLink href="/verify-debug" icon={Search}>
+              Verify Debug
+            </NavLink>
+          )}
           <NavLink href="/dashboard" icon={LayoutDashboard}>
             Dashboard
           </NavLink>
@@ -243,6 +292,14 @@ export function Navbar({ className }: NavbarProps) {
           <NavLink href="/" icon={Home}>
             Home
           </NavLink>
+          <NavLink href="/verify" icon={FileCheck2}>
+            Verify
+          </NavLink>
+          {process.env.NODE_ENV === "development" && (
+            <NavLink href="/verify-debug" icon={Search}>
+              Verify Debug
+            </NavLink>
+          )}
           <NavLink href="/collectables" icon={Award}>
             My Certificates
           </NavLink>
@@ -255,6 +312,14 @@ export function Navbar({ className }: NavbarProps) {
         <NavLink href="/" icon={Home}>
           Home
         </NavLink>
+        <NavLink href="/verify" icon={FileCheck2}>
+          Verify
+        </NavLink>
+        {process.env.NODE_ENV === "development" && (
+          <NavLink href="/verify-debug" icon={Search}>
+            Verify Debug
+          </NavLink>
+        )}
         <NavLink href="/register-university" icon={Building}>
           Register University
         </NavLink>

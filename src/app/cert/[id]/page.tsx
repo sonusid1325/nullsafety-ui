@@ -398,7 +398,7 @@ export default function CertificatePage() {
                         Certificate ID
                       </p>
                       <p className="font-bold text-white font-mono text-sm">
-                        {certificate.certificate_hash?.slice(0, 16)}...
+                        {certificate.id}
                       </p>
                     </div>
                   </div>
