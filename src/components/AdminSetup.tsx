@@ -34,7 +34,7 @@ import { SolanaClient, PROGRAM_ID } from "@/lib/anchor/client";
 // System admin wallet addresses (replace with actual admin addresses)
 const SYSTEM_ADMIN_WALLETS = [
   // Add your admin wallet addresses here
-  "REPLACE_WITH_ACTUAL_ADMIN_WALLET_1",
+  "BYQ7mNMX1UWjaC4yZ9KQFRsNSTyTf84FrkpgcpKorcky",
   "REPLACE_WITH_ACTUAL_ADMIN_WALLET_2",
 ];
 

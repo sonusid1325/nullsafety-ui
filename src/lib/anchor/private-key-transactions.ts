@@ -220,6 +220,37 @@ export class PrivateKeyTransactionManager {
     try {
       const { studentName, courseName, grade, certificateId } = params;
 
+      // Validate parameters to prevent PDA seed length issues
+      const validationErrors: string[] = [];
+
+      if (Buffer.from(certificateId).length > 32) {
+        validationErrors.push(
+          `Certificate ID too long: ${Buffer.from(certificateId).length} bytes (max 32 bytes)`,
+        );
+      }
+
+      if (Buffer.from(studentName).length > 100) {
+        validationErrors.push(
+          `Student name too long: ${Buffer.from(studentName).length} bytes (max 100 bytes)`,
+        );
+      }
+
+      if (Buffer.from(courseName).length > 100) {
+        validationErrors.push(
+          `Course name too long: ${Buffer.from(courseName).length} bytes (max 100 bytes)`,
+        );
+      }
+
+      if (Buffer.from(grade).length > 20) {
+        validationErrors.push(
+          `Grade too long: ${Buffer.from(grade).length} bytes (max 20 bytes)`,
+        );
+      }
+
+      if (validationErrors.length > 0) {
+        throw new Error(`Validation failed: ${validationErrors.join(", ")}`);
+      }
+
       const [institutionPDA] = SolanaClient.getInstitutionPDA(
         this.keypair.publicKey,
       );
@@ -491,17 +522,75 @@ export function createPrivateKeyTransactionManager(
   return new PrivateKeyTransactionManager(key, rpcUrl);
 }
 
-// Helper to generate certificate ID
+// Simple string hash function for browser compatibility
+function simpleStringHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36).substring(0, 6);
+}
+
+// Helper to generate certificate ID (max 32 bytes for PDA seed)
 export function generateCertificateId(
   studentName: string,
   courseName: string,
 ): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  const nameHash = studentName.toLowerCase().replace(/\s+/g, "");
-  const courseHash = courseName.toLowerCase().replace(/\s+/g, "");
+  // Create a hash of student name and course for uniqueness
+  const combined = `${studentName.toLowerCase().trim()}_${courseName.toLowerCase().trim()}`;
+  const hash = simpleStringHash(combined);
 
-  return `${nameHash}_${courseHash}_${timestamp}_${random}`;
+  // Use shorter timestamp (last 8 digits of timestamp)
+  const timestamp = Date.now().toString().slice(-8);
+
+  // Short random component
+  const random = Math.random().toString(36).substring(2, 4);
+
+  // Format: HASH-TIMESTAMP-RANDOM (6+1+8+1+2 = 18 bytes, well under 32 byte limit)
+  const certificateId = `${hash}-${timestamp}-${random}`;
+
+  // Validate length to prevent PDA seed issues
+  if (Buffer.from(certificateId).length > 32) {
+    throw new Error(
+      `Certificate ID too long: ${certificateId.length} bytes. Max is 32 bytes for PDA seeds.`,
+    );
+  }
+
+  return certificateId;
+}
+
+// Test certificate ID generation to ensure it works correctly
+export function testCertificateIdGeneration(): void {
+  console.log("🧪 Testing certificate ID generation...");
+
+  const testCases = [
+    { student: "John Doe", course: "Computer Science" },
+    {
+      student: "A very long student name that might cause issues",
+      course: "A very long course name that might also cause problems",
+    },
+    {
+      student: "José María García-López",
+      course: "Ingeniería de Software Avanzada",
+    },
+    { student: "短名", course: "编程" }, // Short names in Chinese
+  ];
+
+  for (const testCase of testCases) {
+    try {
+      const id = generateCertificateId(testCase.student, testCase.course);
+      const byteLength = Buffer.from(id).length;
+      console.log(`✅ Generated ID: ${id} (${byteLength} bytes)`);
+
+      if (byteLength > 32) {
+        console.error(`❌ ID too long: ${byteLength} bytes > 32 bytes limit`);
+      }
+    } catch (error) {
+      console.error(`❌ Error generating ID for ${testCase.student}:`, error);
+    }
+  }
 }
 
 // Utility functions
@@ -530,4 +619,19 @@ export const PrivateKeyUtils = {
       privateKey: bs58.encode(keypair.secretKey),
     };
   },
+
+  // Validate certificate ID length
+  validateCertificateId: (certificateId: string): boolean => {
+    const byteLength = Buffer.from(certificateId).length;
+    if (byteLength > 32) {
+      console.error(
+        `Certificate ID too long: ${byteLength} bytes > 32 bytes limit`,
+      );
+      return false;
+    }
+    return true;
+  },
+
+  // Test certificate ID generation
+  testCertificateIdGeneration,
 };

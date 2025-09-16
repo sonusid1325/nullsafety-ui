@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "Missing required fields",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       console.log("🏫 Setting up institution for first time...");
       const setupSuccess = await txManager.setupInstitution(
         institutionName,
-        "Blockchain Campus" // Default location
+        "Blockchain Campus", // Default location
       );
       if (!setupSuccess) {
         return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
             success: false,
             error: "Failed to setup institution on blockchain",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -74,6 +74,26 @@ export async function POST(request: NextRequest) {
     // Generate certificate ID
     const certificateId = generateCertificateId(studentName, courseName);
     console.log(`🔖 Generated certificate ID: ${certificateId}`);
+
+    // Validate certificate ID length to prevent PDA seed issues
+    const certificateIdBytes = Buffer.from(certificateId).length;
+    if (certificateIdBytes > 32) {
+      console.error(
+        `❌ Certificate ID too long: ${certificateIdBytes} bytes > 32 bytes limit`,
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Certificate ID too long (${certificateIdBytes} bytes). Max allowed is 32 bytes for blockchain PDAs.`,
+          certificateId,
+        },
+        { status: 400 },
+      );
+    }
+
+    console.log(
+      `✅ Certificate ID validation passed: ${certificateIdBytes}/32 bytes`,
+    );
 
     // Issue certificate on blockchain
     console.log("⛓️  Issuing certificate on blockchain...");
@@ -85,13 +105,30 @@ export async function POST(request: NextRequest) {
     });
 
     if (!blockchainResult.success) {
+      console.error("❌ Blockchain certificate creation failed:");
+      console.error("   Error:", blockchainResult.error);
+      console.error("   Certificate ID:", certificateId);
+      console.error(
+        "   Certificate ID bytes:",
+        Buffer.from(certificateId).length,
+      );
+      console.error("   Student name bytes:", Buffer.from(studentName).length);
+      console.error("   Course name bytes:", Buffer.from(courseName).length);
+
       return NextResponse.json(
         {
           success: false,
-          error: blockchainResult.error || "Failed to create certificate on blockchain",
+          error:
+            blockchainResult.error ||
+            "Failed to create certificate on blockchain",
           certificateId,
+          debugInfo: {
+            certificateIdBytes: Buffer.from(certificateId).length,
+            studentNameBytes: Buffer.from(studentName).length,
+            courseNameBytes: Buffer.from(courseName).length,
+          },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -127,7 +164,7 @@ export async function POST(request: NextRequest) {
           blockchainTransaction: blockchainResult.signature,
           blockchainUrl: blockchainResult.transactionUrl,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -160,9 +197,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: "Private key not configured. Please add SOLANA_PRIVATE_KEY to your environment variables.",
+            error:
+              "Private key not configured. Please add SOLANA_PRIVATE_KEY to your environment variables.",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -170,19 +208,32 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: "Insufficient SOL balance for transaction. Please request an airdrop for devnet testing.",
+            error:
+              "Insufficient SOL balance for transaction. Please request an airdrop for devnet testing.",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
+    }
+
+    // Enhanced error logging
+    console.error("❌ Certificate creation failed with error:", error);
+    if (error instanceof Error) {
+      console.error("   Error message:", error.message);
+      console.error("   Error stack:", error.stack);
     }
 
     return NextResponse.json(
       {
         success: false,
         error: error instanceof Error ? error.message : "Internal server error",
+        debugInfo: {
+          errorType:
+            error instanceof Error ? error.constructor.name : typeof error,
+          timestamp: new Date().toISOString(),
+        },
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -196,7 +247,7 @@ export async function GET() {
     if (!privateKey) {
       return NextResponse.json({
         status: "error",
-        message: "SOLANA_PRIVATE_KEY not configured"
+        message: "SOLANA_PRIVATE_KEY not configured",
       });
     }
 
@@ -209,13 +260,12 @@ export async function GET() {
       message: "Certificate creation service is ready",
       publicKey: txManager.getPublicKey().toString(),
       balance: balance,
-      network: "devnet"
+      network: "devnet",
     });
-
   } catch (error) {
     return NextResponse.json({
       status: "error",
-      message: error instanceof Error ? error.message : "Unknown error"
+      message: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }
