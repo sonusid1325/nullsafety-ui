@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import QRCode from "qrcode";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ export default function CertificatePage() {
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<"png" | "pdf" | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
 
   const fetchCertificate = useCallback(async () => {
     try {
@@ -110,6 +112,30 @@ export default function CertificatePage() {
       fetchCertificate();
     }
   }, [params.id, fetchCertificate]);
+
+  useEffect(() => {
+    // Generate QR code for certificate URL
+    const generateQRCode = async () => {
+      try {
+        const certificateUrl = `https://explorer.solana.com/tx/${certificate?.certificate_hash}?cluster=devnet`;
+        const qrDataUrl = await QRCode.toDataURL(certificateUrl, {
+          width: 128,
+          margin: 2,
+          color: {
+            dark: "#FFFFFF",
+            light: "#000000",
+          },
+        });
+        setQrCodeUrl(qrDataUrl);
+      } catch (error) {
+        console.error("Error generating QR code:", error);
+      }
+    };
+
+    if (typeof window !== "undefined" && certificate?.certificate_hash) {
+      generateQRCode();
+    }
+  }, [certificate]);
 
   const downloadAsPNG = async () => {
     if (!certificateRef.current) return;
@@ -339,21 +365,42 @@ export default function CertificatePage() {
                 </div>
 
                 <div className="flex justify-between items-center pt-8 border-t border-white/20">
-                  <div className="border border-white/20 p-4 rounded bg-gray-900/30">
-                    <p className="text-sm text-gray-300 uppercase tracking-wider">
-                      Issue Date
-                    </p>
-                    <p className="font-bold text-white text-lg">
-                      {new Date(certificate.issued_date).toLocaleDateString()}
-                    </p>
+                  {/* QR Code on the left */}
+                  <div className="flex pjustify-center items-center pt-8 border-t border-white/20">
+                    {qrCodeUrl && (
+                      // This div acts as the QR code container. The text and image within it are centered.
+                      <div className="border p-10 border-white/20 rounded bg-gray-900/30">
+                        <Image
+                          src={qrCodeUrl}
+                          alt="Certificate QR Code"
+                          width={100}
+                          height={100}
+                          className="w-20 h-20"
+                        />
+                        <p className="text-xs text-gray-300 text-center mt-2 uppercase tracking-wider">
+                          QR Verify
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="border border-white/20 p-4 rounded bg-gray-900/30">
-                    <p className="text-sm text-gray-300 uppercase tracking-wider">
-                      Certificate ID
-                    </p>
-                    <p className="font-bold text-white font-mono text-sm">
-                      {certificate.certificate_hash?.slice(0, 16)}...
-                    </p>
+                  {/* Date and Certificate ID on the right */}
+                  <div className="flex flex-col space-y-4">
+                    <div className="border border-white/20 p-2 rounded bg-gray-900/30">
+                      <p className="text-sm text-gray-300 uppercase tracking-wider">
+                        Issue Date
+                      </p>
+                      <p className="font-bold text-white text-lg">
+                        {new Date(certificate.issued_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="border border-white/20 p-4 rounded bg-gray-900/30">
+                      <p className="text-sm text-gray-300 uppercase tracking-wider">
+                        Certificate ID
+                      </p>
+                      <p className="font-bold text-white font-mono text-sm">
+                        {certificate.certificate_hash?.slice(0, 16)}...
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
