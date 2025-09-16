@@ -675,14 +675,14 @@ export default function DashboardPage() {
                     )}
 
                     {blockchainEnabled && (
-                      <Link href="/admin-setup">
+                      <Link href="/admin">
                         <Button
                           variant="outline"
                           size="sm"
                           className="border-gray-300 dark:border-gray-700"
                         >
                           <Settings className="w-3 h-3 mr-1" />
-                          Admin Setup
+                          Admin
                         </Button>
                       </Link>
                     )}
