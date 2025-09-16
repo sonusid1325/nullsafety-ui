@@ -463,7 +463,7 @@ export default function CertificatePage() {
                 {/* View on Blockchain */}
                 {certificate.certificate_hash && (
                   <a
-                    href={`https://solscan.io/tx/${certificate.certificate_hash}?cluster=devnet`}
+                    href={`https://explorer.solana.com/tx/${certificate.certificate_hash}?cluster=devnet`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full"
