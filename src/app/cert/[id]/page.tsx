@@ -366,7 +366,7 @@ export default function CertificatePage() {
 
                 <div className="flex justify-between items-center pt-8 border-t border-white/20">
                   {/* QR Code on the left */}
-                  <div className="flex pjustify-center items-center pt-8 border-t border-white/20">
+                  <div className="flex items-center space-x-4">
                     {qrCodeUrl && (
                       // This div acts as the QR code container. The text and image within it are centered.
                       <div className="border p-10 border-white/20 rounded bg-gray-900/30">
