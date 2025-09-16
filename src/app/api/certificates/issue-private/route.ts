@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPrivateKeyTransactionManager, generateCertificateId } from "@/lib/anchor/private-key-transactions";
+import {
+  createPrivateKeyTransactionManager,
+  generateCertificateId,
+} from "@/lib/anchor/private-key-transactions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +14,7 @@ export async function POST(request: NextRequest) {
       grade,
       certificateId,
       institutionName = "EduChain Demo Institution",
-      location = "Blockchain University"
+      location = "Blockchain University",
     } = body;
 
     // Validate required fields
@@ -19,14 +22,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required fields: studentName, courseName, grade"
+          error: "Missing required fields: studentName, courseName, grade",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Generate certificate ID if not provided
-    const finalCertificateId = certificateId || generateCertificateId(studentName, courseName);
+    const finalCertificateId =
+      certificateId || generateCertificateId(studentName, courseName);
 
     // Create transaction manager with private key
     const txManager = createPrivateKeyTransactionManager();
@@ -36,21 +40,24 @@ export async function POST(request: NextRequest) {
       studentName,
       courseName,
       grade,
-      certificateId: finalCertificateId
+      certificateId: finalCertificateId,
     });
 
     // Check if institution setup is needed (first time)
     const institution = await txManager.getInstitution();
     if (!institution) {
       console.log("🏫 Setting up institution for first time...");
-      const setupSuccess = await txManager.setupInstitution(institutionName, location);
+      const setupSuccess = await txManager.setupInstitution(
+        institutionName,
+        location,
+      );
       if (!setupSuccess) {
         return NextResponse.json(
           {
             success: false,
-            error: "Failed to setup institution"
+            error: "Failed to setup institution",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -60,12 +67,13 @@ export async function POST(request: NextRequest) {
       studentName,
       courseName,
       grade,
-      certificateId: finalCertificateId
+      certificateId: finalCertificateId,
     });
 
     if (result.success) {
       // Get certificate data for response
-      const certificateData = await txManager.getCertificate(finalCertificateId);
+      const certificateData =
+        await txManager.getCertificate(finalCertificateId);
 
       return NextResponse.json({
         success: true,
@@ -78,30 +86,29 @@ export async function POST(request: NextRequest) {
           courseName,
           grade,
           issuedAt: new Date().toISOString(),
-          issuerPublicKey: txManager.getPublicKey().toString()
+          issuerPublicKey: txManager.getPublicKey().toString(),
         },
-        message: "Certificate issued successfully on blockchain"
+        message: "Certificate issued successfully on blockchain",
       });
     } else {
       return NextResponse.json(
         {
           success: false,
           error: result.error,
-          certificateId: finalCertificateId
+          certificateId: finalCertificateId,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
   } catch (error) {
     console.error("❌ API Error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Internal server error"
+        error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -109,7 +116,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const certificateId = searchParams.get('certificateId');
+    const certificateId = searchParams.get("certificateId");
 
     if (!certificateId) {
       // Return all certificates for this institution
@@ -120,12 +127,12 @@ export async function GET(request: NextRequest) {
         success: true,
         data: {
           total: certificates.length,
-          certificates: certificates.map(cert => ({
+          certificates: certificates.map((cert) => ({
             address: cert.address.toString(),
-            ...cert.data
+            ...cert.data,
           })),
-          issuerPublicKey: txManager.getPublicKey().toString()
-        }
+          issuerPublicKey: txManager.getPublicKey().toString(),
+        },
       });
     }
 
@@ -137,31 +144,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Certificate not found"
+          error: "Certificate not found",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        certificateId,
         address: certificate.address.toString(),
         ...certificate.data,
-        issuerPublicKey: txManager.getPublicKey().toString()
-      }
+        issuerPublicKey: txManager.getPublicKey().toString(),
+      },
     });
-
   } catch (error) {
     console.error("❌ API Error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Internal server error"
+        error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -176,9 +181,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid certificates array"
+          error: "Invalid certificates array",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -188,9 +193,10 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: "Each certificate must have studentName, courseName, and grade"
+            error:
+              "Each certificate must have studentName, courseName, and grade",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -200,29 +206,36 @@ export async function PUT(request: NextRequest) {
     // Ensure institution is set up
     const institution = await txManager.getInstitution();
     if (!institution) {
-      const setupSuccess = await txManager.setupInstitution("EduChain Demo Institution", "Blockchain University");
+      const setupSuccess = await txManager.setupInstitution(
+        "EduChain Demo Institution",
+        "Blockchain University",
+      );
       if (!setupSuccess) {
         return NextResponse.json(
           {
             success: false,
-            error: "Failed to setup institution"
+            error: "Failed to setup institution",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
 
     // Process certificates with generated IDs
-    const processedCertificates = certificates.map(cert => ({
+    const processedCertificates = certificates.map((cert) => ({
       ...cert,
-      certificateId: cert.certificateId || generateCertificateId(cert.studentName, cert.courseName)
+      certificateId:
+        cert.certificateId ||
+        generateCertificateId(cert.studentName, cert.courseName),
     }));
 
     // Issue certificates in batch
-    const results = await txManager.batchIssueCertificates(processedCertificates);
+    const results = await txManager.batchIssueCertificates(
+      processedCertificates,
+    );
 
-    const successful = results.filter(r => r.success);
-    const failed = results.filter(r => !r.success);
+    const successful = results.filter((r) => r.success);
+    const failed = results.filter((r) => !r.success);
 
     return NextResponse.json({
       success: true,
@@ -236,22 +249,21 @@ export async function PUT(request: NextRequest) {
           success: result.success,
           transactionSignature: result.signature,
           transactionUrl: result.transactionUrl,
-          error: result.error
+          error: result.error,
         })),
-        issuerPublicKey: txManager.getPublicKey().toString()
+        issuerPublicKey: txManager.getPublicKey().toString(),
       },
-      message: `Batch processing complete: ${successful.length}/${certificates.length} certificates issued successfully`
+      message: `Batch processing complete: ${successful.length}/${certificates.length} certificates issued successfully`,
     });
-
   } catch (error) {
     console.error("❌ Batch API Error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Internal server error"
+        error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
