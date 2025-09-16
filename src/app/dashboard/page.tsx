@@ -861,7 +861,7 @@ export default function DashboardPage() {
                         <>
                           <p>Add your Solana private key to .env.local file:</p>
                           <code className="block bg-red-100 dark:bg-red-900 p-2 rounded text-xs">
-                            SOLANA_PRIVATE_KEY=3sNrx9GXSEt9n9RGQDPkNhuQsAWAQAssAkiH8QKcyFh7jwpvGJLizYMstbpq5FqFifAeZKt7h31KeSkWDJamtTfF
+                            {/*SOLANA_PRIVATE_KEY=3sNrx9GXSEt9n9RGQDPkNhuQsAWAQAssAkiH8QKcyFh7jwpvGJLizYMstbpq5FqFifAeZKt7h31KeSkWDJamtTfF*/}
                           </code>
                           <p className="text-xs">
                             Restart the development server after adding the
