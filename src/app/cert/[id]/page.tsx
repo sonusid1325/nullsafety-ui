@@ -18,6 +18,7 @@ import toast, { Toaster } from "react-hot-toast";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 
 export default function CertificatePage() {
   const params = useParams();
@@ -274,7 +275,8 @@ export default function CertificatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black relative">
+    <div className="min-h-screen bg-white dark:bg-black">
+      <Navbar />
       <Toaster position="top-right" />
 
       {/* Header */}

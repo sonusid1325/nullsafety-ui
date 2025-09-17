@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 
 // Debug utility to test database connection
 const testDatabaseConnection = async () => {
@@ -290,6 +291,7 @@ export default function RegisterUniversityPage() {
     return (
       <div className="min-h-screen bg-white dark:bg-black">
         <Toaster position="top-right" />
+        <Navbar />
 
         {/* Header */}
         <header className="border-b border-gray-200 dark:border-gray-800">
@@ -380,6 +382,7 @@ export default function RegisterUniversityPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <Toaster position="top-right" />
+      <Navbar />
 
       {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800">

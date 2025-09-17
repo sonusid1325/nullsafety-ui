@@ -16,6 +16,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { Navbar } from "@/components/Navbar";
 
 interface Certificate {
   id: string;
@@ -95,6 +96,7 @@ export default function CertificateDebugPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
+      <Navbar />
       <Toaster position="top-right" />
 
       {/* Header */}

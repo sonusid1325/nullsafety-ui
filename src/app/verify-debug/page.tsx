@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
+import { Navbar } from "@/components/Navbar";
 
 interface Certificate {
   id: string;
@@ -232,229 +233,235 @@ export default function VerifyDebugPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Certificate Verification Debug</h1>
-          <p className="text-muted-foreground mt-2">
-            Debug tools for certificate database and verification system
-          </p>
-        </div>
+    <div className="min-h-screen bg-white dark:bg-black">
+      <Navbar />
 
-        {/* Database Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Database Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {getStatusIcon(dbStatus)}
-                <span>Database Connection</span>
-              </div>
-              {getStatusBadge(dbStatus)}
-            </div>
-            {dbStatus === "connected" && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Found {certificates.length} certificates (showing last 10)
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-3xl font-bold">
+              Certificate Verification Debug
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Debug tools for certificate database and verification system
+            </p>
+          </div>
 
-        {/* Search Tool */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5" />
-              Search Certificate
-            </CardTitle>
-            <CardDescription>
-              Enter a certificate ID or UUID to search the database
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Label htmlFor="search-id">Certificate ID or UUID</Label>
-                <Input
-                  id="search-id"
-                  placeholder="Enter certificate ID..."
-                  value={searchId}
-                  onChange={(e) => setSearchId(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && searchCertificate()}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button onClick={searchCertificate} disabled={searchLoading}>
-                  {searchLoading ? "Searching..." : "Search"}
-                </Button>
-              </div>
-            </div>
-
-            {searchResult && (
-              <div className="mt-4 p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2">Found Certificate:</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <strong>ID:</strong> {searchResult.id}
-                  </div>
-                  <div>
-                    <strong>Certificate ID:</strong>{" "}
-                    {searchResult.certificate_id}
-                  </div>
-                  <div>
-                    <strong>Student:</strong> {searchResult.student_name}
-                  </div>
-                  <div>
-                    <strong>Roll No:</strong> {searchResult.roll_no}
-                  </div>
-                  <div>
-                    <strong>Course:</strong> {searchResult.course_name}
-                  </div>
-                  <div>
-                    <strong>Grade:</strong> {searchResult.grade}
-                  </div>
-                  <div>
-                    <strong>Institution:</strong>{" "}
-                    {searchResult.institution_name}
-                  </div>
-                  <div>
-                    <strong>Issued Date:</strong> {searchResult.issued_date}
-                  </div>
-                  <div>
-                    <strong>Revoked:</strong>{" "}
-                    {searchResult.is_revoked ? "Yes" : "No"}
-                  </div>
-                  <div>
-                    <strong>Verifications:</strong>{" "}
-                    {searchResult.verification_count}
-                  </div>
+          {/* Database Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Database Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(dbStatus)}
+                  <span>Database Connection</span>
                 </div>
-                <div className="mt-2">
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      testVerificationAPI(searchResult.certificate_id)
-                    }
-                  >
-                    Test Verification API
+                {getStatusBadge(dbStatus)}
+              </div>
+              {dbStatus === "connected" && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Found {certificates.length} certificates (showing last 10)
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Search Tool */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5" />
+                Search Certificate
+              </CardTitle>
+              <CardDescription>
+                Enter a certificate ID or UUID to search the database
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label htmlFor="search-id">Certificate ID or UUID</Label>
+                  <Input
+                    id="search-id"
+                    placeholder="Enter certificate ID..."
+                    value={searchId}
+                    onChange={(e) => setSearchId(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && searchCertificate()}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={searchCertificate} disabled={searchLoading}>
+                    {searchLoading ? "Searching..." : "Search"}
                   </Button>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Certificates List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Certificates</CardTitle>
-            <CardDescription>
-              Last 10 certificates in the database
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-4">Loading certificates...</div>
-            ) : certificates.length === 0 ? (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  No certificates found in the database. Make sure certificates
-                  are properly inserted.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Certificate ID</th>
-                      <th className="text-left p-2">Student Name</th>
-                      <th className="text-left p-2">Institution</th>
-                      <th className="text-left p-2">Course</th>
-                      <th className="text-left p-2">Grade</th>
-                      <th className="text-left p-2">Status</th>
-                      <th className="text-left p-2">Verifications</th>
-                      <th className="text-left p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {certificates.map((cert) => (
-                      <tr
-                        key={cert.id}
-                        className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        <td className="p-2 font-mono text-xs">
-                          {cert.certificate_id}
-                        </td>
-                        <td className="p-2">{cert.student_name}</td>
-                        <td className="p-2">{cert.institution_name}</td>
-                        <td className="p-2">{cert.course_name}</td>
-                        <td className="p-2">{cert.grade}</td>
-                        <td className="p-2">
-                          {cert.is_revoked ? (
-                            <Badge variant="destructive">Revoked</Badge>
-                          ) : (
-                            <Badge variant="default" className="bg-green-500">
-                              Valid
-                            </Badge>
-                          )}
-                        </td>
-                        <td className="p-2">{cert.verification_count}</td>
-                        <td className="p-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              testVerificationAPI(cert.certificate_id)
-                            }
-                          >
-                            Test
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Sample OCR Data Format */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Sample OCR Data Format</CardTitle>
-            <CardDescription>
-              Expected format for certificate data extraction. Note:
-              certificate_id is used for database lookup only and is not
-              included in authenticity comparison.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-sm overflow-x-auto">
-              {JSON.stringify(
-                {
-                  student_name: "John Doe",
-                  roll_no: "2021001",
-                  course_name: "Computer Science",
-                  grade: "A+",
-                  certificate_id: "CERT-2024-001", // Used for database lookup, not compared
-                  institution_name: "Example University",
-                  issued_date: "2024-01-15",
-                },
-                null,
-                2,
+              {searchResult && (
+                <div className="mt-4 p-4 border rounded-lg">
+                  <h4 className="font-semibold mb-2">Found Certificate:</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <strong>ID:</strong> {searchResult.id}
+                    </div>
+                    <div>
+                      <strong>Certificate ID:</strong>{" "}
+                      {searchResult.certificate_id}
+                    </div>
+                    <div>
+                      <strong>Student:</strong> {searchResult.student_name}
+                    </div>
+                    <div>
+                      <strong>Roll No:</strong> {searchResult.roll_no}
+                    </div>
+                    <div>
+                      <strong>Course:</strong> {searchResult.course_name}
+                    </div>
+                    <div>
+                      <strong>Grade:</strong> {searchResult.grade}
+                    </div>
+                    <div>
+                      <strong>Institution:</strong>{" "}
+                      {searchResult.institution_name}
+                    </div>
+                    <div>
+                      <strong>Issued Date:</strong> {searchResult.issued_date}
+                    </div>
+                    <div>
+                      <strong>Revoked:</strong>{" "}
+                      {searchResult.is_revoked ? "Yes" : "No"}
+                    </div>
+                    <div>
+                      <strong>Verifications:</strong>{" "}
+                      {searchResult.verification_count}
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        testVerificationAPI(searchResult.certificate_id)
+                      }
+                    >
+                      Test Verification API
+                    </Button>
+                  </div>
+                </div>
               )}
-            </pre>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Certificates List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Certificates</CardTitle>
+              <CardDescription>
+                Last 10 certificates in the database
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-4">Loading certificates...</div>
+              ) : certificates.length === 0 ? (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    No certificates found in the database. Make sure
+                    certificates are properly inserted.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2">Certificate ID</th>
+                        <th className="text-left p-2">Student Name</th>
+                        <th className="text-left p-2">Institution</th>
+                        <th className="text-left p-2">Course</th>
+                        <th className="text-left p-2">Grade</th>
+                        <th className="text-left p-2">Status</th>
+                        <th className="text-left p-2">Verifications</th>
+                        <th className="text-left p-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {certificates.map((cert) => (
+                        <tr
+                          key={cert.id}
+                          className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <td className="p-2 font-mono text-xs">
+                            {cert.certificate_id}
+                          </td>
+                          <td className="p-2">{cert.student_name}</td>
+                          <td className="p-2">{cert.institution_name}</td>
+                          <td className="p-2">{cert.course_name}</td>
+                          <td className="p-2">{cert.grade}</td>
+                          <td className="p-2">
+                            {cert.is_revoked ? (
+                              <Badge variant="destructive">Revoked</Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-green-500">
+                                Valid
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="p-2">{cert.verification_count}</td>
+                          <td className="p-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                testVerificationAPI(cert.certificate_id)
+                              }
+                            >
+                              Test
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Sample OCR Data Format */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Sample OCR Data Format</CardTitle>
+              <CardDescription>
+                Expected format for certificate data extraction. Note:
+                certificate_id is used for database lookup only and is not
+                included in authenticity comparison.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-sm overflow-x-auto">
+                {JSON.stringify(
+                  {
+                    student_name: "John Doe",
+                    roll_no: "2021001",
+                    course_name: "Computer Science",
+                    grade: "A+",
+                    certificate_id: "CERT-2024-001", // Used for database lookup, not compared
+                    institution_name: "Example University",
+                    issued_date: "2024-01-15",
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
